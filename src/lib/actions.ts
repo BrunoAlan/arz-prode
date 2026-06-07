@@ -55,7 +55,9 @@ export async function confirmResult(
     !Number.isInteger(homeScore) ||
     !Number.isInteger(awayScore) ||
     homeScore < 0 ||
-    awayScore < 0
+    awayScore < 0 ||
+    homeScore > 99 ||
+    awayScore > 99
   ) {
     throw new Error("Marcador inválido");
   }
