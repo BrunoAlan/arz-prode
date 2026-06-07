@@ -55,6 +55,8 @@ function accumulate(teamIds: number[], matches: StandingMatch[]): Map<number, St
     home.played++; away.played++;
     home.goalsFor += m.homeScore; home.goalsAgainst += m.awayScore;
     away.goalsFor += m.awayScore; away.goalsAgainst += m.homeScore;
+    home.goalDiff = home.goalsFor - home.goalsAgainst;
+    away.goalDiff = away.goalsFor - away.goalsAgainst;
 
     if (m.homeScore > m.awayScore) {
       home.won++; home.points += 3; away.lost++;
@@ -65,7 +67,6 @@ function accumulate(teamIds: number[], matches: StandingMatch[]): Map<number, St
     }
   }
 
-  for (const s of stats.values()) s.goalDiff = s.goalsFor - s.goalsAgainst;
   return stats;
 }
 

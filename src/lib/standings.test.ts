@@ -58,6 +58,15 @@ describe("computeGroupStandings", () => {
     expect(rows[1].teamId).toBe(1);
   });
 
+  it("empate: ambos equipos suman 1 punto y 1 jugado", () => {
+    const rows = computeGroupStandings(
+      [T(1, "A"), T(2, "B")],
+      [{ homeTeamId: 1, awayTeamId: 2, homeScore: 1, awayScore: 1 }],
+    );
+    expect(rows[0]).toMatchObject({ drawn: 1, played: 1, points: 1, goalDiff: 0 });
+    expect(rows[1]).toMatchObject({ drawn: 1, played: 1, points: 1, goalDiff: 0 });
+  });
+
   it("qualifies: true para puestos 1 y 2, false del 3 en adelante", () => {
     const rows = computeGroupStandings(
       [T(1, "A"), T(2, "B"), T(3, "C")],
