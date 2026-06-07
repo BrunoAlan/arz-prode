@@ -159,17 +159,18 @@
   display: flex;
   flex: 1 1 0%;
   align-items: center;
+  padding-block: 0.4rem; /* aire vertical entre cards */
 }
 /* tramo horizontal: del borde de la card al límite de la columna */
 .bk-cell[data-sender] {
-  padding-right: 1.5rem;
+  padding-right: 2.25rem;
 }
 .bk-cell[data-sender]::after {
   content: "";
   position: absolute;
   right: 0;
   top: 50%;
-  width: 1.5rem;
+  width: 2.25rem;
   height: 1px;
   background: var(--border);
 }

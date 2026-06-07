@@ -17,7 +17,7 @@ export function Bracket({
       <div className="overflow-x-auto pb-4">
         <div className="flex min-w-max">
           {rounds.map((round, roundIdx) => (
-            <div key={round.key} className="flex w-56 flex-col">
+            <div key={round.key} className="flex w-64 flex-col">
               <h3 className="mb-3 text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 {round.title}
               </h3>
@@ -39,7 +39,7 @@ export function Bracket({
         </div>
       </div>
       {thirdPlace && (
-        <div className="mt-8 w-56">
+        <div className="mt-8 w-64">
           <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Tercer puesto
           </h3>
