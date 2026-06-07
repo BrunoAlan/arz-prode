@@ -40,3 +40,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# tooling local de agentes (no es parte del proyecto)
+.agents/
+.claude/
+skills-lock.json
+
+# playwright (screenshots de verificación)
+.playwright-mcp/
