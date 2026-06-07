@@ -78,16 +78,55 @@ export function computeGroupStandings(
   const byId = new Map(teams.map((t) => [t.id, t]));
   const stats = accumulate(teamIds, matches);
 
-  const ordered = [...teamIds].sort((a, b) => {
+  const tiedOverall = (a: number, b: number) => {
+    const sa = stats.get(a)!;
+    const sb = stats.get(b)!;
+    return (
+      sa.points === sb.points &&
+      sa.goalDiff === sb.goalDiff &&
+      sa.goalsFor === sb.goalsFor
+    );
+  };
+
+  // Reordena un grupo de empatados con la mini-tabla de partidos entre ellos.
+  const breakTie = (ids: number[]): number[] => {
+    const set = new Set(ids);
+    const h2h = accumulate(
+      ids,
+      matches.filter((m) => set.has(m.homeTeamId) && set.has(m.awayTeamId)),
+    );
+    return [...ids].sort((a, b) => {
+      const sa = h2h.get(a)!;
+      const sb = h2h.get(b)!;
+      return (
+        sb.points - sa.points ||
+        sb.goalDiff - sa.goalDiff ||
+        sb.goalsFor - sa.goalsFor ||
+        byId.get(a)!.name.localeCompare(byId.get(b)!.name)
+      );
+    });
+  };
+
+  const byOverall = (a: number, b: number) => {
     const sa = stats.get(a)!;
     const sb = stats.get(b)!;
     return (
       sb.points - sa.points ||
       sb.goalDiff - sa.goalDiff ||
-      sb.goalsFor - sa.goalsFor ||
-      byId.get(a)!.name.localeCompare(byId.get(b)!.name)
+      sb.goalsFor - sa.goalsFor
     );
-  });
+  };
+
+  const sorted = [...teamIds].sort(byOverall);
+  const ordered: number[] = [];
+  let i = 0;
+  while (i < sorted.length) {
+    let j = i + 1;
+    while (j < sorted.length && tiedOverall(sorted[i], sorted[j])) j++;
+    const run = sorted.slice(i, j);
+    ordered.push(...(run.length === 1 ? run : breakTie(run)));
+    i = j;
+  }
 
   return ordered.map((id, idx) => {
     const s = stats.get(id)!;

@@ -67,6 +67,28 @@ describe("computeGroupStandings", () => {
     expect(rows[1]).toMatchObject({ drawn: 1, played: 1, points: 1, goalDiff: 0 });
   });
 
+  it("empate total en pts/dg/gf se resuelve por enfrentamiento directo", () => {
+    const rows = computeGroupStandings(
+      [
+        { id: 1, name: "Zeta", flag: null },
+        { id: 2, name: "Alfa", flag: null },
+        { id: 3, name: "Carla", flag: null },
+        { id: 4, name: "Delta", flag: null },
+      ],
+      [
+        { homeTeamId: 1, awayTeamId: 2, homeScore: 1, awayScore: 0 }, // Zeta 1-0 Alfa
+        { homeTeamId: 3, awayTeamId: 1, homeScore: 1, awayScore: 0 }, // Carla 1-0 Zeta
+        { homeTeamId: 1, awayTeamId: 4, homeScore: 2, awayScore: 0 }, // Zeta 2-0 Delta
+        { homeTeamId: 2, awayTeamId: 3, homeScore: 1, awayScore: 0 }, // Alfa 1-0 Carla
+        { homeTeamId: 2, awayTeamId: 4, homeScore: 2, awayScore: 0 }, // Alfa 2-0 Delta
+        { homeTeamId: 4, awayTeamId: 3, homeScore: 1, awayScore: 0 }, // Delta 1-0 Carla
+      ],
+    );
+    // Zeta y Alfa: ambos 6 pts, DG +2, GF 3 -> desempata el 1-0 de Zeta sobre Alfa
+    expect(rows[0].teamId).toBe(1);
+    expect(rows[1].teamId).toBe(2);
+  });
+
   it("qualifies: true para puestos 1 y 2, false del 3 en adelante", () => {
     const rows = computeGroupStandings(
       [T(1, "A"), T(2, "B"), T(3, "C")],
