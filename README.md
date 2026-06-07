@@ -1,36 +1,79 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Arz Prode ⚽
 
-## Getting Started
+Prode interno de **Arzion** para la **Copa Mundial de la FIFA 2026**. Login solo con Google
+restringido al dominio `@arzion.com`, pronóstico de marcador exacto por partido, ranking único
+compartido y panel de admin para cargar resultados.
 
-First, run the development server:
+## Stack
+
+- **Next.js** (App Router, TypeScript) — Server Components + Server Actions
+- **Auth.js v5** (Google) con restricción de dominio `@arzion.com` (split config edge-safe)
+- **Drizzle ORM** + **Neon** (Postgres serverless)
+- **Tailwind v4** + **shadcn/ui** — theme "Editorial Scoreboard" (claro, acento lime)
+- **Vitest** (lógica de dominio testeada)
+- Deploy en **Vercel** (plan Hobby, gratis)
+
+## Reglas
+
+- **Pronóstico**: marcador exacto de cada partido, editable hasta el inicio del partido.
+- **Puntos**: acertar el resultado (1X2) = **+1**; acertar el marcador exacto = **+3** (reemplaza al +1).
+- **Privacidad**: los pronósticos ajenos de un partido se ven recién después del kickoff.
+- **Admin**: definido por `ADMIN_EMAILS`; confirma resultados (recalcula puntos) y asigna los cruces de eliminatorias.
+
+## Desarrollo local
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env.local   # completá los valores (ver abajo)
+npx auth secret              # genera AUTH_SECRET en .env.local
+npm run dev                  # http://localhost:3000
+npm test                     # corre los tests de Vitest
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Variables de entorno (`.env.local`)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Variable | Descripción |
+|----------|-------------|
+| `DATABASE_URL` | Connection string de Neon (`postgresql://...?sslmode=require`) |
+| `AUTH_SECRET` | Secreto de Auth.js (`npx auth secret`) |
+| `AUTH_URL` | URL pública (local: `http://localhost:3000`) |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Credenciales OAuth de Google |
+| `ALLOWED_DOMAIN` | `arzion.com` |
+| `ADMIN_EMAILS` | Emails admin separados por coma (ej. `alan.bruno@arzion.com`) |
+| `AUTH_TRUST_HOST` | `true` en Vercel / detrás de un proxy |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Base de datos
 
-## Learn More
+```bash
+npm run db:push   # crea las tablas en Neon a partir del schema Drizzle
+npm run db:seed   # carga el fixture del Mundial 2026 (48 equipos, 104 partidos)
+```
 
-To learn more about Next.js, take a look at the following resources:
+> El seed (`src/db/fixture-data.ts`) se compiló del fixture oficial; **conviene revisarlo**
+> (grupos, horarios en UTC, sedes) antes del torneo. Es idempotente: si ya hay equipos, aborta.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Puesta en producción (Vercel, gratis)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. **Neon**: crear cuenta y proyecto Postgres → copiar el connection string a `DATABASE_URL`.
+2. **Google OAuth** (Google Cloud Console → APIs & Services):
+   - OAuth consent screen (si `arzion.com` es Workspace, podés usar **Internal** para reforzar la restricción).
+   - Credentials → OAuth client ID → Web application. Authorized redirect URIs:
+     - `http://localhost:3000/api/auth/callback/google` (local)
+     - `https://<tu-app>.vercel.app/api/auth/callback/google` (prod)
+   - Copiar Client ID/Secret.
+3. **Subir a GitHub** y **importar en Vercel** (framework Next.js autodetectado, plan Hobby).
+4. **Variables de entorno en Vercel** (Production): todas las de la tabla de arriba, con
+   `AUTH_URL=https://<tu-app>.vercel.app` y `AUTH_TRUST_HOST=true`.
+5. Desde tu máquina (con el `DATABASE_URL` de Neon en `.env.local`): `npm run db:push && npm run db:seed`.
+6. Deploy en Vercel y smoke test: login con `@arzion.com`, cargar un pronóstico, ver el ranking;
+   con la cuenta admin, confirmar un resultado.
 
-## Deploy on Vercel
+## Estructura
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- `src/lib/{access,scoring,match-rules,ranking}.ts` — lógica de dominio pura (testeada con Vitest).
+- `src/db/` — schema Drizzle, cliente Neon, fixture y seed.
+- `src/auth.config.ts` / `src/auth.ts` / `src/middleware.ts` — Auth.js (split edge-safe).
+- `src/lib/{queries,actions,session}.ts` — acceso a datos y server actions.
+- `src/app/` — páginas (`/`, `/predicciones`, `/ranking`, `/partido/[id]`, `/admin`).
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Diseño y plan de implementación en `docs/superpowers/`.
