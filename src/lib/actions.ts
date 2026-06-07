@@ -83,6 +83,7 @@ export async function confirmResult(
 
   revalidatePath("/ranking");
   revalidatePath("/admin");
+  revalidatePath("/predicciones");
   revalidatePath(`/partido/${matchId}`);
 }
 

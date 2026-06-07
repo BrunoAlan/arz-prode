@@ -20,12 +20,18 @@ export function PredictionForm({
   const [away, setAway] = useState(initialAway?.toString() ?? "");
   const [pending, startTransition] = useTransition();
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   function submit() {
+    setError(null);
     startTransition(async () => {
-      await savePrediction(matchId, Number(home || 0), Number(away || 0));
-      setSaved(true);
-      setTimeout(() => setSaved(false), 1500);
+      try {
+        await savePrediction(matchId, Number(home || 0), Number(away || 0));
+        setSaved(true);
+        setTimeout(() => setSaved(false), 1500);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "No se pudo guardar");
+      }
     });
   }
 
@@ -53,6 +59,7 @@ export function PredictionForm({
           {pending ? "Guardando…" : saved ? "Guardado ✓" : "Guardar"}
         </Button>
       )}
+      {error && <span className="text-xs text-destructive">{error}</span>}
     </div>
   );
 }

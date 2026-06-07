@@ -32,12 +32,12 @@ export function AdminMatchRow({
     <div className="flex flex-wrap items-center gap-2 border-b py-2 last:border-0">
       <span className="min-w-0 flex-1 truncate text-sm">{label}</span>
       <Input
-        type="number" min={0} value={home} onChange={(e) => setHome(e.target.value)}
+        type="number" min={0} value={home} disabled={pending} onChange={(e) => setHome(e.target.value)}
         className="w-12 text-center font-mono tabular-nums"
       />
       <span className="text-muted-foreground">:</span>
       <Input
-        type="number" min={0} value={away} onChange={(e) => setAway(e.target.value)}
+        type="number" min={0} value={away} disabled={pending} onChange={(e) => setAway(e.target.value)}
         className="w-12 text-center font-mono tabular-nums"
       />
       <Button
