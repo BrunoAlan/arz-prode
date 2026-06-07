@@ -63,8 +63,8 @@ describe("computeGroupStandings", () => {
       [T(1, "A"), T(2, "B")],
       [{ homeTeamId: 1, awayTeamId: 2, homeScore: 1, awayScore: 1 }],
     );
-    expect(rows[0]).toMatchObject({ drawn: 1, played: 1, points: 1, goalDiff: 0 });
-    expect(rows[1]).toMatchObject({ drawn: 1, played: 1, points: 1, goalDiff: 0 });
+    expect(rows[0]).toMatchObject({ teamId: 1, drawn: 1, played: 1, points: 1, goalDiff: 0 });
+    expect(rows[1]).toMatchObject({ teamId: 2, drawn: 1, played: 1, points: 1, goalDiff: 0 });
   });
 
   it("empate total en pts/dg/gf se resuelve por enfrentamiento directo", () => {
