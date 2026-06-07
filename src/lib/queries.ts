@@ -1,7 +1,9 @@
-import { eq, asc } from "drizzle-orm";
+import { eq, asc, and } from "drizzle-orm";
 import { db } from "@/db/client";
 import { matches, teams, predictions, users } from "@/db/schema";
 import { computeRanking } from "@/lib/ranking";
+import { computeGroupStandings, type StandingRow } from "@/lib/standings";
+import { GROUP_LABELS } from "@/lib/group-matches";
 
 export type MatchRow = typeof matches.$inferSelect & {
   home: typeof teams.$inferSelect | null;
@@ -76,4 +78,43 @@ const KNOCKOUT_STAGES = new Set([
 export async function getKnockoutMatches(): Promise<MatchRow[]> {
   const all = await getMatchesOrdered();
   return all.filter((m) => KNOCKOUT_STAGES.has(m.stage));
+}
+
+export async function getGroupStandings(): Promise<
+  { label: string; rows: StandingRow[] }[]
+> {
+  const allTeams = await db.select().from(teams);
+  const finishedGroupMatches = await db
+    .select()
+    .from(matches)
+    .where(and(eq(matches.stage, "group"), eq(matches.status, "finished")));
+
+  const groups: { label: string; rows: StandingRow[] }[] = [];
+  for (const label of GROUP_LABELS) {
+    const groupTeams = allTeams
+      .filter((t) => t.group === label)
+      .map((t) => ({ id: t.id, name: t.name, flag: t.flag }));
+    if (groupTeams.length === 0) continue;
+
+    const ids = new Set(groupTeams.map((t) => t.id));
+    const groupMatches = finishedGroupMatches
+      .filter(
+        (m) =>
+          m.homeTeamId != null &&
+          m.awayTeamId != null &&
+          m.homeScore != null &&
+          m.awayScore != null &&
+          ids.has(m.homeTeamId) &&
+          ids.has(m.awayTeamId),
+      )
+      .map((m) => ({
+        homeTeamId: m.homeTeamId!,
+        awayTeamId: m.awayTeamId!,
+        homeScore: m.homeScore!,
+        awayScore: m.awayScore!,
+      }));
+
+    groups.push({ label, rows: computeGroupStandings(groupTeams, groupMatches) });
+  }
+  return groups;
 }

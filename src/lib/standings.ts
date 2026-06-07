@@ -1,0 +1,172 @@
+export type StandingTeam = { id: number; name: string; flag: string | null };
+
+export type StandingMatch = {
+  homeTeamId: number;
+  awayTeamId: number;
+  homeScore: number;
+  awayScore: number;
+};
+
+export type StandingRow = {
+  teamId: number;
+  name: string;
+  flag: string | null;
+  played: number;
+  won: number;
+  drawn: number;
+  lost: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  goalDiff: number;
+  points: number;
+  position: number;
+  qualifies: boolean;
+};
+
+type Stat = {
+  played: number;
+  won: number;
+  drawn: number;
+  lost: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  goalDiff: number;
+  points: number;
+};
+
+function emptyStat(): Stat {
+  return {
+    played: 0, won: 0, drawn: 0, lost: 0,
+    goalsFor: 0, goalsAgainst: 0, goalDiff: 0, points: 0,
+  };
+}
+
+/** Acumula estadísticas de un conjunto de equipos sobre los partidos en los que
+ *  ambos equipos pertenecen al conjunto (los demás partidos se ignoran). */
+function accumulate(teamIds: number[], matches: StandingMatch[]): Map<number, Stat> {
+  const stats = new Map<number, Stat>();
+  for (const id of teamIds) stats.set(id, emptyStat());
+
+  for (const m of matches) {
+    const home = stats.get(m.homeTeamId);
+    const away = stats.get(m.awayTeamId);
+    if (!home || !away) continue;
+
+    home.played++; away.played++;
+    home.goalsFor += m.homeScore; home.goalsAgainst += m.awayScore;
+    away.goalsFor += m.awayScore; away.goalsAgainst += m.homeScore;
+    home.goalDiff = home.goalsFor - home.goalsAgainst;
+    away.goalDiff = away.goalsFor - away.goalsAgainst;
+
+    if (m.homeScore > m.awayScore) {
+      home.won++; home.points += 3; away.lost++;
+    } else if (m.homeScore < m.awayScore) {
+      away.won++; away.points += 3; home.lost++;
+    } else {
+      home.drawn++; away.drawn++; home.points++; away.points++;
+    }
+  }
+
+  return stats;
+}
+
+export function computeGroupStandings(
+  teams: StandingTeam[],
+  matches: StandingMatch[],
+): StandingRow[] {
+  const teamIds = teams.map((t) => t.id);
+  const byId = new Map(teams.map((t) => [t.id, t]));
+  const stats = accumulate(teamIds, matches);
+
+  const byOverall = (a: number, b: number) => {
+    const sa = stats.get(a)!;
+    const sb = stats.get(b)!;
+    return (
+      sb.points - sa.points ||
+      sb.goalDiff - sa.goalDiff ||
+      sb.goalsFor - sa.goalsFor
+    );
+  };
+
+  const tiedOverall = (a: number, b: number) => byOverall(a, b) === 0;
+
+  // Reordena un grupo de empatados con la mini-tabla de partidos entre ellos.
+  const breakTie = (ids: number[]): number[] => {
+    if (ids.length <= 1) return ids;
+    const set = new Set(ids);
+    const h2h = accumulate(
+      ids,
+      matches.filter((m) => set.has(m.homeTeamId) && set.has(m.awayTeamId)),
+    );
+    const sorted = [...ids].sort(
+      (a, b) =>
+        h2h.get(b)!.points - h2h.get(a)!.points ||
+        h2h.get(b)!.goalDiff - h2h.get(a)!.goalDiff ||
+        h2h.get(b)!.goalsFor - h2h.get(a)!.goalsFor,
+    );
+    const h2hTied = (a: number, b: number) => {
+      const sa = h2h.get(a)!;
+      const sb = h2h.get(b)!;
+      return (
+        sa.points === sb.points &&
+        sa.goalDiff === sb.goalDiff &&
+        sa.goalsFor === sb.goalsFor
+      );
+    };
+    const out: number[] = [];
+    let i = 0;
+    while (i < sorted.length) {
+      let j = i + 1;
+      while (j < sorted.length && h2hTied(sorted[i], sorted[j])) j++;
+      const sub = sorted.slice(i, j);
+      if (sub.length === 1) {
+        out.push(sub[0]);
+      } else if (sub.length === ids.length) {
+        // Empatados también en la mini-tabla h2h: no hay enfrentamientos que los
+        // separen -> desempate final por nombre.
+        out.push(
+          ...sub.sort((a, b) =>
+            byId.get(a)!.name.localeCompare(byId.get(b)!.name),
+          ),
+        );
+      } else {
+        // Subconjunto aún empatado: se recalcula una nueva mini-tabla h2h solo
+        // entre ellos (regla FIFA recursiva). Termina porque |sub| < |ids|.
+        out.push(...breakTie(sub));
+      }
+      i = j;
+    }
+    return out;
+  };
+
+  const sorted = [...teamIds].sort(byOverall);
+  const ordered: number[] = [];
+  let i = 0;
+  while (i < sorted.length) {
+    let j = i + 1;
+    while (j < sorted.length && tiedOverall(sorted[i], sorted[j])) j++;
+    const run = sorted.slice(i, j);
+    ordered.push(...(run.length === 1 ? run : breakTie(run)));
+    i = j;
+  }
+
+  return ordered.map((id, idx) => {
+    const s = stats.get(id)!;
+    const t = byId.get(id)!;
+    return {
+      teamId: id,
+      name: t.name,
+      flag: t.flag,
+      played: s.played,
+      won: s.won,
+      drawn: s.drawn,
+      lost: s.lost,
+      goalsFor: s.goalsFor,
+      goalsAgainst: s.goalsAgainst,
+      goalDiff: s.goalDiff,
+      points: s.points,
+      position: idx + 1,
+      qualifies: idx < 2,
+    };
+  });
+}
