@@ -2,7 +2,8 @@ import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/session";
 import { getMatchById, getPredictionsForMatch } from "@/lib/queries";
 import { isLocked } from "@/lib/match-rules";
-import { formatKickoff } from "@/lib/format";
+import { TeamLabel } from "@/components/TeamLabel";
+import { LocalTime } from "@/components/LocalTime";
 import { Card, CardContent } from "@/components/ui/card";
 
 export default async function PartidoPage({
@@ -16,16 +17,18 @@ export default async function PartidoPage({
   if (!match) notFound();
 
   const locked = isLocked(match, new Date());
-  const home = match.home?.name ?? match.homePlaceholder ?? "?";
-  const away = match.away?.name ?? match.awayPlaceholder ?? "?";
   const preds = locked ? await getPredictionsForMatch(match.id) : [];
 
   return (
     <div className="animate-rise">
-      <div className="text-sm text-muted-foreground">{formatKickoff(match.kickoffAt)}</div>
+      <div className="text-sm text-muted-foreground">
+        <LocalTime iso={match.kickoffAt.toISOString()} />
+      </div>
       <div className="mt-2 flex flex-wrap items-center gap-4">
         <h1 className="font-display text-3xl font-semibold tracking-tight">
-          {home} <span className="text-muted-foreground">vs</span> {away}
+          <TeamLabel team={match.home} placeholder={match.homePlaceholder} />{" "}
+          <span className="text-muted-foreground">vs</span>{" "}
+          <TeamLabel team={match.away} placeholder={match.awayPlaceholder} />
         </h1>
         {match.status === "finished" && (
           <span className="font-mono text-3xl font-semibold tabular-nums">

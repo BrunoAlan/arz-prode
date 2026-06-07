@@ -12,6 +12,7 @@ export default auth;
 export const config = {
   matcher: [
     "/predicciones/:path*",
+    "/llaves/:path*",
     "/ranking/:path*",
     "/partido/:path*",
     "/admin/:path*",

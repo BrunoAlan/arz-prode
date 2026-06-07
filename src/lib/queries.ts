@@ -63,3 +63,17 @@ export async function getRanking() {
     .from(predictions);
   return computeRanking(allUsers, allPreds);
 }
+
+const KNOCKOUT_STAGES = new Set([
+  "round_of_32",
+  "round_of_16",
+  "quarter_final",
+  "semi_final",
+  "third_place",
+  "final",
+]);
+
+export async function getKnockoutMatches(): Promise<MatchRow[]> {
+  const all = await getMatchesOrdered();
+  return all.filter((m) => KNOCKOUT_STAGES.has(m.stage));
+}
