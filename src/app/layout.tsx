@@ -43,6 +43,9 @@ export default async function RootLayout({
                 <Link href="/llaves" className="transition-colors hover:text-foreground">
                   Llaves
                 </Link>
+                <Link href="/posiciones" className="transition-colors hover:text-foreground">
+                  Posiciones
+                </Link>
                 <Link href="/ranking" className="transition-colors hover:text-foreground">
                   Ranking
                 </Link>
