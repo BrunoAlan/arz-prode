@@ -89,6 +89,31 @@ describe("computeGroupStandings", () => {
     expect(rows[1].teamId).toBe(2);
   });
 
+  it("triple empate overall se resuelve por la mini-tabla head-to-head", () => {
+    // A(1), B(2), C(3) terminan idénticos overall (6 pts, DG +2, GF 4); W(4) último.
+    // Entre ellos: ciclo con márgenes distintos -> h2h los separa por DG: A > B > C.
+    const rows = computeGroupStandings(
+      [
+        { id: 1, name: "A", flag: null },
+        { id: 2, name: "B", flag: null },
+        { id: 3, name: "C", flag: null },
+        { id: 4, name: "W", flag: null },
+      ],
+      [
+        { homeTeamId: 1, awayTeamId: 2, homeScore: 2, awayScore: 0 }, // A 2-0 B
+        { homeTeamId: 3, awayTeamId: 1, homeScore: 1, awayScore: 0 }, // C 1-0 A
+        { homeTeamId: 2, awayTeamId: 3, homeScore: 2, awayScore: 0 }, // B 2-0 C
+        { homeTeamId: 1, awayTeamId: 4, homeScore: 2, awayScore: 1 }, // A 2-1 W
+        { homeTeamId: 2, awayTeamId: 4, homeScore: 2, awayScore: 0 }, // B 2-0 W
+        { homeTeamId: 3, awayTeamId: 4, homeScore: 3, awayScore: 0 }, // C 3-0 W
+      ],
+    );
+    expect(rows.map((r) => r.teamId)).toEqual([1, 2, 3, 4]);
+    expect(rows[0].qualifies).toBe(true);
+    expect(rows[1].qualifies).toBe(true);
+    expect(rows[2].qualifies).toBe(false);
+  });
+
   it("qualifies: true para puestos 1 y 2, false del 3 en adelante", () => {
     const rows = computeGroupStandings(
       [T(1, "A"), T(2, "B"), T(3, "C")],

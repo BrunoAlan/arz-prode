@@ -92,21 +92,51 @@ export function computeGroupStandings(
 
   // Reordena un grupo de empatados con la mini-tabla de partidos entre ellos.
   const breakTie = (ids: number[]): number[] => {
+    if (ids.length <= 1) return ids;
     const set = new Set(ids);
     const h2h = accumulate(
       ids,
       matches.filter((m) => set.has(m.homeTeamId) && set.has(m.awayTeamId)),
     );
-    return [...ids].sort((a, b) => {
+    const sorted = [...ids].sort(
+      (a, b) =>
+        h2h.get(b)!.points - h2h.get(a)!.points ||
+        h2h.get(b)!.goalDiff - h2h.get(a)!.goalDiff ||
+        h2h.get(b)!.goalsFor - h2h.get(a)!.goalsFor,
+    );
+    const h2hTied = (a: number, b: number) => {
       const sa = h2h.get(a)!;
       const sb = h2h.get(b)!;
       return (
-        sb.points - sa.points ||
-        sb.goalDiff - sa.goalDiff ||
-        sb.goalsFor - sa.goalsFor ||
-        byId.get(a)!.name.localeCompare(byId.get(b)!.name)
+        sa.points === sb.points &&
+        sa.goalDiff === sb.goalDiff &&
+        sa.goalsFor === sb.goalsFor
       );
-    });
+    };
+    const out: number[] = [];
+    let i = 0;
+    while (i < sorted.length) {
+      let j = i + 1;
+      while (j < sorted.length && h2hTied(sorted[i], sorted[j])) j++;
+      const sub = sorted.slice(i, j);
+      if (sub.length === 1) {
+        out.push(sub[0]);
+      } else if (sub.length === ids.length) {
+        // Empatados también en la mini-tabla h2h: no hay enfrentamientos que los
+        // separen -> desempate final por nombre.
+        out.push(
+          ...sub.sort((a, b) =>
+            byId.get(a)!.name.localeCompare(byId.get(b)!.name),
+          ),
+        );
+      } else {
+        // Subconjunto aún empatado: se recalcula una nueva mini-tabla h2h solo
+        // entre ellos (regla FIFA recursiva). Termina porque |sub| < |ids|.
+        out.push(...breakTie(sub));
+      }
+      i = j;
+    }
+    return out;
   };
 
   const sorted = [...teamIds].sort(byOverall);
