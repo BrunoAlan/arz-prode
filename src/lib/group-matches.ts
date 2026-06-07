@@ -10,7 +10,7 @@ export type MatchSection<T> = {
   matches: T[];
 };
 
-const GROUP_LABELS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
+export const GROUP_LABELS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
 
 const KNOCKOUT_ORDER: { stage: string; key: string; title: string }[] = [
   { stage: "round_of_32", key: "r32", title: "Dieciseisavos" },
