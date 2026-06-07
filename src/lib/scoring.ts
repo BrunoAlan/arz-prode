@@ -1,6 +1,9 @@
 export type ScoreInput = { homeScore: number; awayScore: number };
 export type PredictionInput = { homeScorePred: number; awayScorePred: number };
 
+export const CORRECT_RESULT_POINTS = 1;
+export const EXACT_SCORE_POINTS = 3;
+
 const sign = (h: number, a: number): -1 | 0 | 1 =>
   h > a ? 1 : h < a ? -1 : 0;
 
@@ -13,13 +16,13 @@ export function scorePrediction(
     pred.homeScorePred === result.homeScore &&
     pred.awayScorePred === result.awayScore
   ) {
-    return 3;
+    return EXACT_SCORE_POINTS;
   }
   if (
     sign(pred.homeScorePred, pred.awayScorePred) ===
     sign(result.homeScore, result.awayScore)
   ) {
-    return 1;
+    return CORRECT_RESULT_POINTS;
   }
   return 0;
 }

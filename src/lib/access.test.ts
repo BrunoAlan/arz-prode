@@ -18,6 +18,10 @@ describe("isAllowedEmail", () => {
   it("no se deja engañar por subdominio falso", () => {
     expect(isAllowedEmail("x@arzion.com.evil.com", "arzion.com")).toBe(false);
   });
+  it("rechaza dominio vacío o con solo espacios", () => {
+    expect(isAllowedEmail("user@arzion.com", "")).toBe(false);
+    expect(isAllowedEmail("user@", "   ")).toBe(false);
+  });
 });
 
 describe("isAdmin", () => {

@@ -2,7 +2,7 @@ export function isAllowedEmail(
   email: string | null | undefined,
   domain: string,
 ): boolean {
-  if (!email || !domain) return false;
+  if (!email || !domain?.trim()) return false;
   const normalized = email.trim().toLowerCase();
   return normalized.endsWith(`@${domain.trim().toLowerCase()}`);
 }

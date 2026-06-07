@@ -29,4 +29,16 @@ describe("computeRanking", () => {
     const rows = computeRanking([{ id: "u9", name: "Zoe" }], []);
     expect(rows[0]).toMatchObject({ name: "Zoe", totalPoints: 0, exactCount: 0 });
   });
+  it("desempata por exactos cuando empatan en puntos (fuerza el swap)", () => {
+    const us = [
+      { id: "x", name: "X" }, // 1+1+1 = 3 pts, 0 exactos
+      { id: "y", name: "Y" }, // 3      = 3 pts, 1 exacto
+    ];
+    const ps = [
+      { userId: "x", points: 1 }, { userId: "x", points: 1 }, { userId: "x", points: 1 },
+      { userId: "y", points: 3 },
+    ];
+    const rows = computeRanking(us, ps);
+    expect(rows[0].id).toBe("y"); // mayor exactCount va primero
+  });
 });

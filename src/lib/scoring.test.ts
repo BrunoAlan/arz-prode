@@ -20,4 +20,7 @@ describe("scorePrediction (resultado +1, exacto +3)", () => {
   it("erra el resultado da 0", () => {
     expect(scorePrediction(pred(2, 1), res(0, 1))).toBe(0);
   });
+  it("marcador invertido (gana el otro) da 0", () => {
+    expect(scorePrediction(pred(0, 1), res(1, 0))).toBe(0);
+  });
 });

@@ -1,3 +1,5 @@
+import { EXACT_SCORE_POINTS } from "./scoring";
+
 export type RankingUser = { id: string; name: string | null };
 export type RankingPrediction = { userId: string; points: number | null };
 
@@ -21,7 +23,7 @@ export function computeRanking(
     if (!acc) continue;
     const pts = p.points ?? 0;
     acc.points += pts;
-    if (pts === 3) acc.exact += 1;
+    if (pts === EXACT_SCORE_POINTS) acc.exact += 1;
   }
 
   const rows = users
@@ -38,7 +40,8 @@ export function computeRanking(
       (a, b) =>
         b.totalPoints - a.totalPoints ||
         b.exactCount - a.exactCount ||
-        a.name.localeCompare(b.name),
+        a.name.localeCompare(b.name) ||
+        a.id.localeCompare(b.id),
     );
 
   return rows.map((r, i) => ({ ...r, position: i + 1 }));
