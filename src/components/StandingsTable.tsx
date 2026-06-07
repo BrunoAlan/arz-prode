@@ -1,7 +1,7 @@
 import { TeamLabel } from "@/components/TeamLabel";
 import type { StandingRow } from "@/lib/standings";
 
-const NUM = "text-right font-mono tabular-nums";
+const NUM = "py-1.5 text-right font-mono tabular-nums";
 
 export function StandingsTable({
   label,
@@ -18,20 +18,20 @@ export function StandingsTable({
       <table className="w-full text-sm">
         <thead>
           <tr className="text-xs text-muted-foreground">
-            <th className="py-1 text-left font-medium">Equipo</th>
-            <th className={`w-7 ${NUM} font-medium`}>PJ</th>
-            <th className={`w-7 ${NUM} font-medium`}>G</th>
-            <th className={`w-7 ${NUM} font-medium`}>E</th>
-            <th className={`w-7 ${NUM} font-medium`}>P</th>
-            <th className={`w-8 ${NUM} font-medium`}>GF</th>
-            <th className={`w-8 ${NUM} font-medium`}>GC</th>
-            <th className={`w-8 ${NUM} font-medium`}>DG</th>
-            <th className={`w-8 ${NUM} font-medium`}>Pts</th>
+            <th scope="col" className="py-1 text-left font-medium">Equipo</th>
+            <th scope="col" className={`w-7 ${NUM} font-medium`}>PJ</th>
+            <th scope="col" className={`w-7 ${NUM} font-medium`}>G</th>
+            <th scope="col" className={`w-7 ${NUM} font-medium`}>E</th>
+            <th scope="col" className={`w-7 ${NUM} font-medium`}>P</th>
+            <th scope="col" className={`w-8 ${NUM} font-medium`}>GF</th>
+            <th scope="col" className={`w-8 ${NUM} font-medium`}>GC</th>
+            <th scope="col" className={`w-8 ${NUM} font-medium`}>DG</th>
+            <th scope="col" className={`w-8 ${NUM} font-medium`}>Pts</th>
           </tr>
         </thead>
         <tbody className="divide-y">
           {rows.map((r) => (
-            <tr key={r.teamId} className={r.qualifies ? "bg-accent/50" : ""}>
+            <tr key={r.teamId} className={r.qualifies ? "bg-accent/50" : undefined}>
               <td className="py-1.5">
                 <div className="flex items-center gap-2">
                   <span className="w-4 text-right font-mono text-xs tabular-nums text-muted-foreground">
