@@ -23,7 +23,10 @@ export default async function RootLayout({
   const isAdmin = (session?.user as { isAdmin?: boolean })?.isAdmin;
   return (
     <html lang="es" className={`${display.variable} ${sans.variable} ${mono.variable}`}>
-      <body className="min-h-screen bg-background font-sans text-foreground antialiased">
+      <body
+        suppressHydrationWarning
+        className="min-h-screen bg-background font-sans text-foreground antialiased"
+      >
         {session?.user && (
           <header className="sticky top-0 z-10 border-b bg-background/80 backdrop-blur">
             <nav className="mx-auto flex h-14 max-w-3xl items-center gap-6 px-4">
