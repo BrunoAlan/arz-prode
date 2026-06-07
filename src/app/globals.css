@@ -150,3 +150,36 @@
 .animate-rise {
   animation: rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
+
+/* Llaves (bracket) — líneas conectoras del cuadro en desktop.
+   Cada celda es flex:1 (alturas iguales por columna), así cada partido de la
+   ronda siguiente queda centrado entre sus dos alimentadores. */
+.bk-cell {
+  position: relative;
+  display: flex;
+  flex: 1 1 0%;
+  align-items: center;
+}
+/* tramo horizontal: del borde de la card al límite de la columna */
+.bk-cell[data-sender] {
+  padding-right: 1.5rem;
+}
+.bk-cell[data-sender]::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 50%;
+  width: 1.5rem;
+  height: 1px;
+  background: var(--border);
+}
+/* tramo vertical que une cada par, dibujado por la celda de arriba del par */
+.bk-cell[data-sender]:nth-child(odd)::before {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 50%;
+  height: 100%;
+  width: 1px;
+  background: var(--border);
+}

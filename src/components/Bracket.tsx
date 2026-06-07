@@ -11,33 +11,35 @@ export function Bracket({
   rounds: BracketRoundView[];
   thirdPlace: BracketCardData | null;
 }) {
+  const lastIdx = rounds.length - 1;
   return (
     <div className="hidden md:block">
-      <div className="flex gap-4 overflow-x-auto pb-4">
-        {rounds.map((round, roundIdx) => (
-          <div key={round.key} className="flex min-w-[180px] flex-col">
-            <h3 className="mb-3 text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              {round.title}
-            </h3>
-            <div className="flex flex-1 flex-col justify-around gap-3">
-              {round.cards.map((card, i) => (
-                <div
-                  key={i}
-                  className={
-                    roundIdx < rounds.length - 1
-                      ? "relative after:absolute after:left-full after:top-1/2 after:h-px after:w-4 after:bg-border after:content-['']"
-                      : undefined
-                  }
-                >
-                  <BracketMatchCard data={card} />
-                </div>
-              ))}
+      <div className="overflow-x-auto pb-4">
+        <div className="flex min-w-max">
+          {rounds.map((round, roundIdx) => (
+            <div key={round.key} className="flex w-56 flex-col">
+              <h3 className="mb-3 text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                {round.title}
+              </h3>
+              <div className="flex flex-1 flex-col">
+                {round.cards.map((card, i) => (
+                  <div
+                    key={i}
+                    className="bk-cell"
+                    data-sender={roundIdx < lastIdx ? "" : undefined}
+                  >
+                    <div className="w-full">
+                      <BracketMatchCard data={card} />
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
       {thirdPlace && (
-        <div className="mt-6 max-w-[220px]">
+        <div className="mt-8 w-56">
           <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Tercer puesto
           </h3>
