@@ -21,8 +21,8 @@ export default function GlobalError({
       <body className="min-h-screen bg-background font-sans text-foreground antialiased">
         <main className="mx-auto max-w-3xl px-4 py-8">
           <StatusScreen
-            eyebrow="Error"
-            title="Algo salió mal"
+            eyebrow="Algo salió mal"
+            title="Tuvimos un problema"
             description="Ocurrió un error inesperado. Probá de nuevo en un momento."
           >
             <Button size="lg" onClick={() => unstable_retry()}>
