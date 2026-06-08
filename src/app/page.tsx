@@ -43,7 +43,7 @@ export default async function Home(props: PageProps<"/">) {
         className="animate-rise mt-4 text-xs text-muted-foreground"
         style={{ animationDelay: "220ms" }}
       >
-        Acceso exclusivo con cuenta <span className="font-medium text-foreground">@arzion.com</span>
+        Acceso exclusivo con cuenta <span className="font-medium text-foreground">@arzion.com</span> o <span className="font-medium text-foreground">@restosimple.com</span>
       </p>
     </div>
   );

@@ -1,10 +1,14 @@
 export function isAllowedEmail(
   email: string | null | undefined,
-  domain: string,
+  domains: string | null | undefined,
 ): boolean {
-  if (!email || !domain?.trim()) return false;
+  if (!email || !domains?.trim()) return false;
   const normalized = email.trim().toLowerCase();
-  return normalized.endsWith(`@${domain.trim().toLowerCase()}`);
+  return domains
+    .split(",")
+    .map((d) => d.trim().toLowerCase())
+    .filter(Boolean)
+    .some((d) => normalized.endsWith(`@${d}`));
 }
 
 /**
@@ -16,7 +20,7 @@ export function loginErrorMessage(
 ): string | null {
   if (!code) return null;
   if (code === "AccessDenied") {
-    return "Esa cuenta no tiene acceso. Arz Prode es exclusivo para cuentas @arzion. Probá de nuevo y elegí tu cuenta de trabajo.";
+    return "Esa cuenta no tiene acceso. Arz Prode es exclusivo para cuentas @arzion.com o @restosimple.com. Probá de nuevo y elegí tu cuenta de trabajo.";
   }
   return "Hubo un problema al iniciar sesión. Intentá de nuevo.";
 }

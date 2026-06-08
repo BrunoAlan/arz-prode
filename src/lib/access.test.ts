@@ -22,6 +22,24 @@ describe("isAllowedEmail", () => {
     expect(isAllowedEmail("user@arzion.com", "")).toBe(false);
     expect(isAllowedEmail("user@", "   ")).toBe(false);
   });
+  it("acepta cualquier dominio de una lista separada por comas", () => {
+    const domains = "arzion.com,restosimple.com";
+    expect(isAllowedEmail("juan@arzion.com", domains)).toBe(true);
+    expect(isAllowedEmail("juan@restosimple.com", domains)).toBe(true);
+  });
+  it("rechaza un dominio que no está en la lista", () => {
+    expect(isAllowedEmail("juan@gmail.com", "arzion.com,restosimple.com")).toBe(
+      false,
+    );
+  });
+  it("tolera espacios alrededor de cada dominio de la lista", () => {
+    const domains = " arzion.com , restosimple.com ";
+    expect(isAllowedEmail("Juan@RestoSimple.com", domains)).toBe(true);
+  });
+  it("ignora entradas vacías en la lista", () => {
+    expect(isAllowedEmail("juan@arzion.com", "arzion.com,,")).toBe(true);
+    expect(isAllowedEmail("juan@gmail.com", ",,")).toBe(false);
+  });
 });
 
 describe("isAdmin", () => {
@@ -46,6 +64,7 @@ describe("loginErrorMessage", () => {
   it("da mensaje de dominio para AccessDenied", () => {
     const msg = loginErrorMessage("AccessDenied");
     expect(msg).toContain("@arzion");
+    expect(msg).toContain("@restosimple");
   });
   it("da mensaje genérico para cualquier otro código", () => {
     const msg = loginErrorMessage("Configuration");
