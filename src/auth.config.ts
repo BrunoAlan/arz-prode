@@ -10,6 +10,10 @@ export const authConfig = {
       // (Auth.js por defecto buscaría AUTH_GOOGLE_*). Vacías en build → OK.
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      // Forzar el selector de cuenta: si el browser ya tiene una sesión Google,
+      // igual ofrece "Usar otra cuenta". Evita el loop de rechazo para quien
+      // entró con una cuenta que no es @arzion.
+      authorization: { params: { prompt: "select_account" } },
     }),
   ],
   callbacks: {

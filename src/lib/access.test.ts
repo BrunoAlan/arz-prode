@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { isAllowedEmail, isAdmin } from "./access";
+import { isAllowedEmail, isAdmin, loginErrorMessage } from "./access";
 
 describe("isAllowedEmail", () => {
   it("acepta email del dominio permitido", () => {
@@ -35,5 +35,21 @@ describe("isAdmin", () => {
   it("rechaza email vacío o lista vacía", () => {
     expect(isAdmin("", admins)).toBe(false);
     expect(isAdmin("alan.bruno@arzion.com", "")).toBe(false);
+  });
+});
+
+describe("loginErrorMessage", () => {
+  it("devuelve null sin código de error", () => {
+    expect(loginErrorMessage(undefined)).toBeNull();
+    expect(loginErrorMessage("")).toBeNull();
+  });
+  it("da mensaje de dominio para AccessDenied", () => {
+    const msg = loginErrorMessage("AccessDenied");
+    expect(msg).toContain("@arzion");
+  });
+  it("da mensaje genérico para cualquier otro código", () => {
+    const msg = loginErrorMessage("Configuration");
+    expect(msg).toBeTruthy();
+    expect(msg).not.toContain("@arzion");
   });
 });
