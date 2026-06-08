@@ -3,7 +3,7 @@ import Google from "next-auth/providers/google";
 import { isAllowedEmail, isAdmin } from "@/lib/access";
 
 export const authConfig = {
-  pages: { signIn: "/" },
+  pages: { signIn: "/", error: "/" },
   providers: [
     Google({
       // Las credenciales usan los nombres GOOGLE_CLIENT_* del .env.local
