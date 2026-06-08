@@ -1,13 +1,13 @@
 # Arz Prode ⚽
 
 Prode interno de **Arzion** para la **Copa Mundial de la FIFA 2026**. Login solo con Google
-restringido al dominio `@arzion.com`, pronóstico de marcador exacto por partido, ranking único
-compartido y panel de admin para cargar resultados.
+restringido a los dominios `@arzion.com` y `@restosimple.com`, pronóstico de marcador exacto por
+partido, ranking único compartido y panel de admin para cargar resultados.
 
 ## Stack
 
 - **Next.js** (App Router, TypeScript) — Server Components + Server Actions
-- **Auth.js v5** (Google) con restricción de dominio `@arzion.com` (split config edge-safe)
+- **Auth.js v5** (Google) con restricción por dominio (`@arzion.com`, `@restosimple.com`; split config edge-safe)
 - **Drizzle ORM** + **Neon** (Postgres serverless)
 - **Tailwind v4** + **shadcn/ui** — theme "Editorial Scoreboard" (claro, acento lime)
 - **Vitest** (lógica de dominio testeada)
@@ -38,7 +38,7 @@ npm test                     # corre los tests de Vitest
 | `AUTH_SECRET` | Secreto de Auth.js (`npx auth secret`) |
 | `AUTH_URL` | URL pública (local: `http://localhost:3000`) |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Credenciales OAuth de Google |
-| `ALLOWED_DOMAIN` | `arzion.com` |
+| `ALLOWED_DOMAIN` | Dominios permitidos separados por coma (ej. `arzion.com,restosimple.com`) |
 | `ADMIN_EMAILS` | Emails admin separados por coma (ej. `alan.bruno@arzion.com`) |
 | `AUTH_TRUST_HOST` | `true` en Vercel / detrás de un proxy |
 
@@ -56,7 +56,7 @@ npm run db:seed   # carga el fixture del Mundial 2026 (48 equipos, 104 partidos)
 
 1. **Neon**: crear cuenta y proyecto Postgres → copiar el connection string a `DATABASE_URL`.
 2. **Google OAuth** (Google Cloud Console → APIs & Services):
-   - OAuth consent screen (si `arzion.com` es Workspace, podés usar **Internal** para reforzar la restricción).
+   - OAuth consent screen: con dominios de más de una organización usá **External** (el modo **Internal** limita a un solo Workspace). La restricción real la aplica `ALLOWED_DOMAIN`.
    - Credentials → OAuth client ID → Web application. Authorized redirect URIs:
      - `http://localhost:3000/api/auth/callback/google` (local)
      - `https://<tu-app>.vercel.app/api/auth/callback/google` (prod)
@@ -65,7 +65,7 @@ npm run db:seed   # carga el fixture del Mundial 2026 (48 equipos, 104 partidos)
 4. **Variables de entorno en Vercel** (Production): todas las de la tabla de arriba, con
    `AUTH_URL=https://<tu-app>.vercel.app` y `AUTH_TRUST_HOST=true`.
 5. Desde tu máquina (con el `DATABASE_URL` de Neon en `.env.local`): `npm run db:push && npm run db:seed`.
-6. Deploy en Vercel y smoke test: login con `@arzion.com`, cargar un pronóstico, ver el ranking;
+6. Deploy en Vercel y smoke test: login con `@arzion.com` o `@restosimple.com`, cargar un pronóstico, ver el ranking;
    con la cuenta admin, confirmar un resultado.
 
 ## Estructura
