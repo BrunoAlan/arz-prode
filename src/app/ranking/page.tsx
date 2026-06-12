@@ -11,6 +11,9 @@ export default async function RankingPage() {
         <p className="mt-1 text-sm text-muted-foreground">
           {rows.length} jugadores · Mundial 2026
         </p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          +3 marcador exacto · +1 resultado
+        </p>
       </header>
       <ol className="divide-y">
         {rows.map((r) => {
