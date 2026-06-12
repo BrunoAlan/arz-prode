@@ -2,21 +2,29 @@ import Link from "next/link";
 import { requireUser } from "@/lib/session";
 import { getMatchesOrdered, getUserPredictions } from "@/lib/queries";
 import { isMatchPredictable, isLocked } from "@/lib/match-rules";
-import { groupMatches } from "@/lib/group-matches";
+import { groupMatches, groupMatchesByDay } from "@/lib/group-matches";
 import { PredictionForm } from "@/components/PredictionForm";
 import { TeamLabel } from "@/components/TeamLabel";
 import { LocalTime } from "@/components/LocalTime";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-export default async function PrediccionesPage() {
+export default async function PrediccionesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const user = await requireUser();
+  const { orden } = await searchParams;
+  const byDate = orden === "fecha";
   const [allMatches, preds] = await Promise.all([
     getMatchesOrdered(),
     getUserPredictions(user.id),
   ]);
   const now = new Date();
-  const sections = groupMatches(allMatches);
+  const sections = byDate
+    ? groupMatchesByDay(allMatches)
+    : groupMatches(allMatches);
 
   return (
     <div>
@@ -27,6 +35,34 @@ export default async function PrediccionesPage() {
         <p className="mt-1 text-sm text-muted-foreground">
           Cargá el marcador exacto. Cada partido se cierra al arrancar.
         </p>
+        <div
+          role="group"
+          aria-label="Ordenar partidos"
+          className="mt-4 inline-flex gap-1 rounded-full border p-1 text-xs"
+        >
+          <Link
+            href="/predicciones"
+            aria-current={!byDate ? "page" : undefined}
+            className={`rounded-full px-3 py-1 transition-colors ${
+              byDate
+                ? "text-muted-foreground hover:text-foreground"
+                : "bg-foreground text-background"
+            }`}
+          >
+            Por grupo
+          </Link>
+          <Link
+            href="/predicciones?orden=fecha"
+            aria-current={byDate ? "page" : undefined}
+            className={`rounded-full px-3 py-1 transition-colors ${
+              byDate
+                ? "bg-foreground text-background"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Por fecha
+          </Link>
+        </div>
       </header>
 
       <nav className="sticky top-14 z-10 -mx-4 mb-6 flex gap-1.5 overflow-x-auto border-b bg-background/80 px-4 py-2 backdrop-blur">
