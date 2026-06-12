@@ -1,3 +1,5 @@
+import { formatDay, dayKey } from "./format";
+
 type Groupable = {
   stage: string;
   groupLabel: string | null;
@@ -46,6 +48,29 @@ export function groupMatches<T extends Groupable>(matches: T[]): MatchSection<T>
     if (inRound.length > 0) {
       sections.push({ key: round.key, title: round.title, matches: inRound });
     }
+  }
+
+  return sections;
+}
+
+export function groupMatchesByDay<T extends Groupable>(
+  matches: T[],
+): MatchSection<T>[] {
+  const sorted = [...matches].sort(
+    (a, b) => a.kickoffAt.getTime() - b.kickoffAt.getTime(),
+  );
+  const sections: MatchSection<T>[] = [];
+  const byKey = new Map<string, MatchSection<T>>();
+
+  for (const mm of sorted) {
+    const key = dayKey(mm.kickoffAt);
+    let section = byKey.get(key);
+    if (!section) {
+      section = { key: `dia-${key}`, title: formatDay(mm.kickoffAt), matches: [] };
+      byKey.set(key, section);
+      sections.push(section);
+    }
+    section.matches.push(mm);
   }
 
   return sections;
