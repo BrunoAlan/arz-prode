@@ -16,7 +16,7 @@ partido, ranking único compartido y panel de admin para cargar resultados.
 ## Reglas
 
 - **Pronóstico**: marcador exacto de cada partido, editable hasta el inicio del partido.
-- **Puntos**: acertar el resultado (1X2) = **+1**; acertar el marcador exacto = **+3** (reemplaza al +1).
+- **Puntos**: marcador exacto = **+3**; acertar el resultado (1X2) y la diferencia de gol = **+2**; acertar solo el resultado = **+1**; errar = **0**.
 - **Privacidad**: los pronósticos ajenos de un partido se ven recién después del kickoff.
 - **Admin**: definido por `ADMIN_EMAILS`; confirma resultados (recalcula puntos) y asigna los cruces de eliminatorias.
 
