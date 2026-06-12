@@ -12,7 +12,7 @@ export default async function RankingPage() {
           {rows.length} jugadores · Mundial 2026
         </p>
         <p className="mt-1 text-xs text-muted-foreground">
-          +3 marcador exacto · +1 resultado
+          +3 marcador exacto · +2 diferencia · +1 resultado
         </p>
       </header>
       <ol className="divide-y">
