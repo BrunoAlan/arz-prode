@@ -75,3 +75,18 @@ export function groupMatchesByDay<T extends Groupable>(
 
   return sections;
 }
+
+export function getActiveDayKey<T extends Groupable>(
+  sections: MatchSection<T>[],
+  now: Date,
+): string | null {
+  if (sections.length === 0) return null;
+  const today = dayKey(now);
+  let firstFuture: string | null = null;
+  for (const section of sections) {
+    const day = dayKey(section.matches[0].kickoffAt);
+    if (day === today) return section.key;
+    if (day > today && firstFuture === null) firstFuture = section.key;
+  }
+  return firstFuture ?? sections[sections.length - 1].key;
+}

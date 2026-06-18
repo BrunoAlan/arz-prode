@@ -2,7 +2,9 @@ import Link from "next/link";
 import { requireUser } from "@/lib/session";
 import { getMatchesOrdered, getUserPredictions } from "@/lib/queries";
 import { isMatchPredictable, isLocked } from "@/lib/match-rules";
-import { groupMatches, groupMatchesByDay } from "@/lib/group-matches";
+import { groupMatches, groupMatchesByDay, getActiveDayKey } from "@/lib/group-matches";
+import { DaySectionNav } from "@/components/DaySectionNav";
+import { ScrollToActiveSection } from "@/components/ScrollToActiveSection";
 import { PredictionForm } from "@/components/PredictionForm";
 import { TeamLabel } from "@/components/TeamLabel";
 import { LocalTime } from "@/components/LocalTime";
@@ -16,7 +18,7 @@ export default async function PrediccionesPage({
 }) {
   const user = await requireUser();
   const { orden } = await searchParams;
-  const byDate = orden === "fecha";
+  const byDate = orden !== "grupo";
   const [allMatches, preds] = await Promise.all([
     getMatchesOrdered(),
     getUserPredictions(user.id),
@@ -25,6 +27,7 @@ export default async function PrediccionesPage({
   const sections = byDate
     ? groupMatchesByDay(allMatches)
     : groupMatches(allMatches);
+  const activeKey = byDate ? getActiveDayKey(sections, now) : null;
 
   return (
     <div>
@@ -41,7 +44,7 @@ export default async function PrediccionesPage({
           className="mt-4 inline-flex gap-1 rounded-full border p-1 text-xs"
         >
           <Link
-            href="/predicciones"
+            href="/predicciones?orden=grupo"
             aria-current={!byDate ? "page" : undefined}
             className={`rounded-full px-3 py-1 transition-colors ${
               byDate
@@ -52,7 +55,7 @@ export default async function PrediccionesPage({
             Por grupo
           </Link>
           <Link
-            href="/predicciones?orden=fecha"
+            href="/predicciones"
             aria-current={byDate ? "page" : undefined}
             className={`rounded-full px-3 py-1 transition-colors ${
               byDate
@@ -65,17 +68,8 @@ export default async function PrediccionesPage({
         </div>
       </header>
 
-      <nav className="sticky top-14 z-10 -mx-4 mb-6 flex gap-1.5 overflow-x-auto border-b bg-background/80 px-4 py-2 backdrop-blur">
-        {sections.map((s) => (
-          <a
-            key={s.key}
-            href={`#${s.key}`}
-            className="whitespace-nowrap rounded-full border px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground"
-          >
-            {s.title}
-          </a>
-        ))}
-      </nav>
+      <DaySectionNav sections={sections} activeKey={activeKey} />
+      {byDate && activeKey && <ScrollToActiveSection targetId={activeKey} />}
 
       <div className="space-y-8">
         {sections.map((section) => (
