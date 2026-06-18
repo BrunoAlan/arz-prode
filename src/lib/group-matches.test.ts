@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { groupMatches, groupMatchesByDay } from "./group-matches";
+import { groupMatches, groupMatchesByDay, getActiveDayKey } from "./group-matches";
 
 function m(stage: string, groupLabel: string | null, iso: string) {
   return { stage, groupLabel, kickoffAt: new Date(iso) };
@@ -89,5 +89,38 @@ describe("groupMatchesByDay", () => {
 
   it("lista vacía devuelve []", () => {
     expect(groupMatchesByDay([])).toEqual([]);
+  });
+});
+
+describe("getActiveDayKey", () => {
+  it("devuelve la sección de hoy cuando hoy tiene partidos", () => {
+    const secs = groupMatchesByDay([
+      m("group", "A", "2026-06-17T19:00:00Z"),
+      m("group", "B", "2026-06-18T19:00:00Z"),
+      m("group", "C", "2026-06-19T19:00:00Z"),
+    ]);
+    // 2026-06-18T15:00Z = 12:00 del 18 en BA
+    expect(getActiveDayKey(secs, new Date("2026-06-18T15:00:00Z"))).toBe("dia-2026-06-18");
+  });
+
+  it("devuelve el próximo día con partidos cuando hoy no tiene", () => {
+    const secs = groupMatchesByDay([
+      m("group", "A", "2026-06-16T19:00:00Z"),
+      m("group", "B", "2026-06-19T19:00:00Z"),
+    ]);
+    // 2026-06-17 es día libre; el próximo con partidos es el 19
+    expect(getActiveDayKey(secs, new Date("2026-06-17T15:00:00Z"))).toBe("dia-2026-06-19");
+  });
+
+  it("devuelve la última sección cuando todo quedó en el pasado", () => {
+    const secs = groupMatchesByDay([
+      m("group", "A", "2026-06-11T19:00:00Z"),
+      m("group", "B", "2026-06-12T19:00:00Z"),
+    ]);
+    expect(getActiveDayKey(secs, new Date("2026-07-01T15:00:00Z"))).toBe("dia-2026-06-12");
+  });
+
+  it("devuelve null sin secciones", () => {
+    expect(getActiveDayKey([], new Date("2026-06-18T15:00:00Z"))).toBeNull();
   });
 });
