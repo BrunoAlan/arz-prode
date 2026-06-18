@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/session";
 import { getMatchesOrdered } from "@/lib/queries";
-import { groupMatches, groupMatchesByDay } from "@/lib/group-matches";
+import { groupMatches, groupMatchesByDay, getActiveDayKey } from "@/lib/group-matches";
+import { DaySectionNav } from "@/components/DaySectionNav";
+import { ScrollToActiveSection } from "@/components/ScrollToActiveSection";
 import { AdminMatchRow } from "@/components/AdminMatchRow";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -12,11 +14,13 @@ export default async function AdminPage({
 }) {
   await requireAdmin();
   const { orden } = await searchParams;
-  const byDate = orden === "fecha";
+  const byDate = orden !== "grupo";
   const allMatches = await getMatchesOrdered();
+  const now = new Date();
   const sections = byDate
     ? groupMatchesByDay(allMatches)
     : groupMatches(allMatches);
+  const activeKey = byDate ? getActiveDayKey(sections, now) : null;
 
   return (
     <div>
@@ -33,7 +37,7 @@ export default async function AdminPage({
           className="mt-4 inline-flex gap-1 rounded-full border p-1 text-xs"
         >
           <Link
-            href="/admin"
+            href="/admin?orden=grupo"
             aria-current={!byDate ? "page" : undefined}
             className={`rounded-full px-3 py-1 transition-colors ${
               byDate
@@ -44,7 +48,7 @@ export default async function AdminPage({
             Por grupo
           </Link>
           <Link
-            href="/admin?orden=fecha"
+            href="/admin"
             aria-current={byDate ? "page" : undefined}
             className={`rounded-full px-3 py-1 transition-colors ${
               byDate
@@ -57,17 +61,8 @@ export default async function AdminPage({
         </div>
       </header>
 
-      <nav className="sticky top-14 z-10 -mx-4 mb-6 flex gap-1.5 overflow-x-auto border-b bg-background/80 px-4 py-2 backdrop-blur">
-        {sections.map((s) => (
-          <a
-            key={s.key}
-            href={`#${s.key}`}
-            className="whitespace-nowrap rounded-full border px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground"
-          >
-            {s.title}
-          </a>
-        ))}
-      </nav>
+      <DaySectionNav sections={sections} activeKey={activeKey} />
+      {byDate && activeKey && <ScrollToActiveSection targetId={activeKey} />}
 
       <div className="space-y-6">
         {sections.map((section) => (
