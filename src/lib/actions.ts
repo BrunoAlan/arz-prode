@@ -1,13 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { eq, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { matches, predictions } from "@/db/schema";
 import { requireUser, requireAdmin } from "@/lib/session";
 import { isMatchPredictable } from "@/lib/match-rules";
 import { scorePrediction } from "@/lib/scoring";
-import { getKnockoutMatches, getGroupStandings } from "@/lib/queries";
+import { getKnockoutMatches, getGroupStandings, getCompleteGroups } from "@/lib/queries";
 import { resolveBracket, isInvalidKnockoutDraw } from "@/lib/bracket-advance";
 
 export async function savePrediction(
@@ -118,24 +118,15 @@ export async function assignTeams(
 // Re-deriva y persiste los equipos de las llaves a partir del estado actual.
 // Idempotente: solo escribe los cambios (deltas).
 async function applyBracketAdvance() {
-  const knockout = await getKnockoutMatches();
-  const standings = await getGroupStandings();
-
-  // Un grupo está "firme" cuando sus 6 partidos están finished.
-  const finishedGroup = await db
-    .select({ groupLabel: matches.groupLabel })
-    .from(matches)
-    .where(and(eq(matches.stage, "group"), eq(matches.status, "finished")));
-  const finishedCount = new Map<string, number>();
-  for (const r of finishedGroup) {
-    if (r.groupLabel) {
-      finishedCount.set(r.groupLabel, (finishedCount.get(r.groupLabel) ?? 0) + 1);
-    }
-  }
+  const [knockout, standings, completeGroups] = await Promise.all([
+    getKnockoutMatches(),
+    getGroupStandings(),
+    getCompleteGroups(),
+  ]);
 
   const groupOrder = new Map<string, number[]>();
   for (const g of standings) {
-    if ((finishedCount.get(g.label) ?? 0) >= 6) {
+    if (completeGroups.has(g.label)) {
       groupOrder.set(g.label, g.rows.map((row) => row.teamId));
     }
   }
@@ -198,24 +189,13 @@ export async function assignThird(matchId: number, teamId: number) {
   const allowedGroups = placeholder.slice(2).split("/").map((s) => s.trim());
 
   // El equipo debe ser el 3° de uno de los grupos permitidos Y completo (6 finished).
-  const standings = await getGroupStandings();
-  const finishedGroup = await db
-    .select({ groupLabel: matches.groupLabel })
-    .from(matches)
-    .where(and(eq(matches.stage, "group"), eq(matches.status, "finished")));
-  const finishedCount = new Map<string, number>();
-  for (const r of finishedGroup) {
-    if (r.groupLabel) {
-      finishedCount.set(r.groupLabel, (finishedCount.get(r.groupLabel) ?? 0) + 1);
-    }
-  }
+  const [standings, completeGroups] = await Promise.all([
+    getGroupStandings(),
+    getCompleteGroups(),
+  ]);
   const validThirds = new Set<number>();
   for (const g of standings) {
-    if (
-      allowedGroups.includes(g.label) &&
-      g.rows[2] &&
-      (finishedCount.get(g.label) ?? 0) >= 6
-    ) {
+    if (allowedGroups.includes(g.label) && g.rows[2] && completeGroups.has(g.label)) {
       validThirds.add(g.rows[2].teamId);
     }
   }

@@ -120,6 +120,23 @@ export async function getGroupStandings(): Promise<
   return groups;
 }
 
+// Grupos "firmes": los que tienen sus 6 partidos finished.
+export async function getCompleteGroups(): Promise<Set<string>> {
+  const finished = await db
+    .select({ groupLabel: matches.groupLabel })
+    .from(matches)
+    .where(and(eq(matches.stage, "group"), eq(matches.status, "finished")));
+  const count = new Map<string, number>();
+  for (const r of finished) {
+    if (r.groupLabel) count.set(r.groupLabel, (count.get(r.groupLabel) ?? 0) + 1);
+  }
+  const complete = new Set<string>();
+  for (const [label, n] of count) {
+    if (n >= 6) complete.add(label);
+  }
+  return complete;
+}
+
 export type ThirdSlot = {
   matchId: number;
   placeholder: string;
@@ -133,19 +150,12 @@ export async function getThirdPlaceData(): Promise<{
   ranking: RankedThird[];
   slots: ThirdSlot[];
 }> {
-  const standings = await getGroupStandings();
-
-  const finishedGroup = await db
-    .select({ groupLabel: matches.groupLabel })
-    .from(matches)
-    .where(and(eq(matches.stage, "group"), eq(matches.status, "finished")));
-  const finishedCount = new Map<string, number>();
-  for (const r of finishedGroup) {
-    if (r.groupLabel) {
-      finishedCount.set(r.groupLabel, (finishedCount.get(r.groupLabel) ?? 0) + 1);
-    }
-  }
-  const allComplete = GROUP_LABELS.every((g) => (finishedCount.get(g) ?? 0) >= 6);
+  const [standings, complete, knockout] = await Promise.all([
+    getGroupStandings(),
+    getCompleteGroups(),
+    getKnockoutMatches(),
+  ]);
+  const allComplete = GROUP_LABELS.every((g) => complete.has(g));
 
   const thirds = standings
     .map((g) => {
@@ -165,7 +175,6 @@ export async function getThirdPlaceData(): Promise<{
     .filter((x): x is NonNullable<typeof x> => x != null);
   const ranking = rankThirdPlaces(thirds);
 
-  const knockout = await getKnockoutMatches();
   const slots: ThirdSlot[] = knockout
     .filter(
       (m) =>

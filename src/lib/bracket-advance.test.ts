@@ -125,6 +125,33 @@ describe("resolveBracket", () => {
     const b = resolveBracket({ knockout: build(), groupOrder: new Map() });
     expect(a).toEqual(b);
   });
+
+  it("propaga una corrección de ganador a través de varias rondas", () => {
+    // Cadena real del fixture: 73 -> 90 (R16) -> 97 (cuartos, away = Ganador R16-90).
+    const build = (r32HomeWins: boolean): KnockoutMatchInput[] => [
+      mk(73, "2A", "2B", {
+        homeTeamId: 102,
+        awayTeamId: 202,
+        homeScore: r32HomeWins ? 2 : 0,
+        awayScore: r32HomeWins ? 0 : 2,
+        finished: true,
+      }),
+      mk(75, "1F", "2C", {
+        homeTeamId: 601, awayTeamId: 302, homeScore: 3, awayScore: 0, finished: true,
+      }),
+      mk(90, "Ganador R32-73", "Ganador R32-75", {
+        stage: "round_of_16", homeScore: 1, awayScore: 0, finished: true,
+      }),
+      mk(97, "Ganador R16-89", "Ganador R16-90", { stage: "quarter_final" }),
+    ];
+    const slot97Away = (knockout: KnockoutMatchInput[]) =>
+      resolveBracket({ knockout, groupOrder: new Map() }).find(
+        (s) => s.matchId === 97 && s.side === "away",
+      )?.teamId;
+
+    expect(slot97Away(build(true))).toBe(102); // gana home del 73 => propaga a 97
+    expect(slot97Away(build(false))).toBe(202); // corrección: gana away del 73 => 97 cambia
+  });
 });
 
 describe("rankThirdPlaces", () => {
