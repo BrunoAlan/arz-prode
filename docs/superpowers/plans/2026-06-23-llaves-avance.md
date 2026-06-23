@@ -465,7 +465,6 @@ Agregar estos imports junto a los existentes:
 
 ```ts
 import { getKnockoutMatches, getGroupStandings } from "@/lib/queries";
-import { GROUP_LABELS } from "@/lib/group-matches";
 import { resolveBracket, isInvalidKnockoutDraw } from "@/lib/bracket-advance";
 ```
 
@@ -606,8 +605,6 @@ export async function assignThird(matchId: number, teamId: number) {
 }
 ```
 
-> Nota: `GROUP_LABELS` se importó en el Step 1 porque lo usa `getThirdPlaceData` en Task 4 (mismo archivo de imports compartido no aplica — `getThirdPlaceData` vive en `queries.ts`). Si el linter marca `GROUP_LABELS` sin uso en `actions.ts`, quitar ese import de acá (pertenece a `queries.ts`).
-
 - [ ] **Step 4: Mostrar el error de empate en `AdminMatchRow`**
 
 En `src/components/AdminMatchRow.tsx`, reemplazar la función `submit` y agregar estado de error.
@@ -651,7 +648,7 @@ Y renderizar el error: envolver el `return (...)` para mostrarlo. Cambiar el `<d
 - [ ] **Step 5: Typecheck**
 
 Run: `npx tsc --noEmit`
-Expected: sin errores. (Si `GROUP_LABELS` queda sin uso en `actions.ts`, quitar ese import — ver nota del Step 3.)
+Expected: sin errores.
 
 - [ ] **Step 6: Smoke manual (DB real, opcional pero recomendado)**
 
