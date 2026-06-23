@@ -1,12 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { db } from "@/db/client";
 import { matches, predictions } from "@/db/schema";
 import { requireUser, requireAdmin } from "@/lib/session";
 import { isMatchPredictable } from "@/lib/match-rules";
 import { scorePrediction } from "@/lib/scoring";
+import { getKnockoutMatches, getGroupStandings } from "@/lib/queries";
+import { resolveBracket, isInvalidKnockoutDraw } from "@/lib/bracket-advance";
 
 export async function savePrediction(
   matchId: number,
@@ -62,6 +64,16 @@ export async function confirmResult(
     throw new Error("Marcador inválido");
   }
 
+  const match = await db.query.matches.findFirst({
+    where: eq(matches.id, matchId),
+  });
+  if (!match) throw new Error("Partido inexistente");
+  if (isInvalidKnockoutDraw(match.stage, homeScore, awayScore)) {
+    throw new Error(
+      "En eliminatorias cargá el resultado con la definición ya reflejada (ej. 3-2); no puede quedar empate.",
+    );
+  }
+
   await db
     .update(matches)
     .set({ homeScore, awayScore, status: "finished" })
@@ -81,6 +93,8 @@ export async function confirmResult(
     await db.update(predictions).set({ points }).where(eq(predictions.id, p.id));
   }
 
+  await applyBracketAdvance();
+
   revalidatePath("/ranking");
   revalidatePath("/admin");
   revalidatePath("/predicciones");
@@ -98,5 +112,108 @@ export async function assignTeams(
     .set({ homeTeamId, awayTeamId })
     .where(eq(matches.id, matchId));
   revalidatePath("/predicciones");
+  revalidatePath("/admin");
+}
+
+// Re-deriva y persiste los equipos de las llaves a partir del estado actual.
+// Idempotente: solo escribe los cambios (deltas).
+async function applyBracketAdvance() {
+  const knockout = await getKnockoutMatches();
+  const standings = await getGroupStandings();
+
+  // Un grupo está "firme" cuando sus 6 partidos están finished.
+  const finishedGroup = await db
+    .select({ groupLabel: matches.groupLabel })
+    .from(matches)
+    .where(and(eq(matches.stage, "group"), eq(matches.status, "finished")));
+  const finishedCount = new Map<string, number>();
+  for (const r of finishedGroup) {
+    if (r.groupLabel) {
+      finishedCount.set(r.groupLabel, (finishedCount.get(r.groupLabel) ?? 0) + 1);
+    }
+  }
+
+  const groupOrder = new Map<string, number[]>();
+  for (const g of standings) {
+    if ((finishedCount.get(g.label) ?? 0) >= 6) {
+      groupOrder.set(g.label, g.rows.map((row) => row.teamId));
+    }
+  }
+
+  const slots = resolveBracket({
+    knockout: knockout.map((m) => ({
+      id: m.id,
+      stage: m.stage,
+      homePlaceholder: m.homePlaceholder,
+      awayPlaceholder: m.awayPlaceholder,
+      homeTeamId: m.homeTeamId,
+      awayTeamId: m.awayTeamId,
+      homeScore: m.homeScore,
+      awayScore: m.awayScore,
+      finished: m.status === "finished",
+    })),
+    groupOrder,
+  });
+
+  const current = new Map(knockout.map((m) => [m.id, m]));
+  for (const slot of slots) {
+    const m = current.get(slot.matchId);
+    if (!m) continue;
+    const cur = slot.side === "home" ? m.homeTeamId : m.awayTeamId;
+    if (cur === slot.teamId) continue; // sin cambios
+    await db
+      .update(matches)
+      .set(
+        slot.side === "home"
+          ? { homeTeamId: slot.teamId }
+          : { awayTeamId: slot.teamId },
+      )
+      .where(eq(matches.id, slot.matchId));
+  }
+
+  revalidatePath("/llaves");
+  revalidatePath("/predicciones");
+}
+
+export async function assignThird(matchId: number, teamId: number) {
+  await requireAdmin();
+  const match = await db.query.matches.findFirst({
+    where: eq(matches.id, matchId),
+  });
+  if (!match) throw new Error("Partido inexistente");
+  if (match.stage !== "round_of_32") {
+    throw new Error("El partido no es de dieciseisavos");
+  }
+
+  const side =
+    match.homePlaceholder?.startsWith("3 ")
+      ? "home"
+      : match.awayPlaceholder?.startsWith("3 ")
+        ? "away"
+        : null;
+  if (!side) throw new Error("Este partido no tiene un cupo de tercero");
+
+  const placeholder = (side === "home" ? match.homePlaceholder : match.awayPlaceholder)!;
+  // "3 A/B/C/D/F" -> ["A","B","C","D","F"]
+  const allowedGroups = placeholder.slice(2).split("/").map((s) => s.trim());
+
+  // El equipo debe ser el 3° de uno de los grupos permitidos (y ese grupo, listado).
+  const standings = await getGroupStandings();
+  const validThirds = new Set<number>();
+  for (const g of standings) {
+    if (allowedGroups.includes(g.label) && g.rows[2]) {
+      validThirds.add(g.rows[2].teamId);
+    }
+  }
+  if (!validThirds.has(teamId)) {
+    throw new Error("Equipo inválido para este cupo de tercero");
+  }
+
+  await db
+    .update(matches)
+    .set(side === "home" ? { homeTeamId: teamId } : { awayTeamId: teamId })
+    .where(eq(matches.id, matchId));
+
+  await applyBracketAdvance();
   revalidatePath("/admin");
 }
