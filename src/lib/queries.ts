@@ -4,6 +4,7 @@ import { matches, teams, predictions, users } from "@/db/schema";
 import { computeRanking } from "@/lib/ranking";
 import { computeGroupStandings, type StandingRow } from "@/lib/standings";
 import { GROUP_LABELS } from "@/lib/group-matches";
+import { rankThirdPlaces, type RankedThird } from "@/lib/bracket-advance";
 
 export type MatchRow = typeof matches.$inferSelect & {
   home: typeof teams.$inferSelect | null;
@@ -117,4 +118,72 @@ export async function getGroupStandings(): Promise<
     groups.push({ label, rows: computeGroupStandings(groupTeams, groupMatches) });
   }
   return groups;
+}
+
+export type ThirdSlot = {
+  matchId: number;
+  placeholder: string;
+  allowedGroups: string[];
+  assignedTeamId: number | null;
+  assignedName: string | null;
+};
+
+export async function getThirdPlaceData(): Promise<{
+  allComplete: boolean;
+  ranking: RankedThird[];
+  slots: ThirdSlot[];
+}> {
+  const standings = await getGroupStandings();
+
+  const finishedGroup = await db
+    .select({ groupLabel: matches.groupLabel })
+    .from(matches)
+    .where(and(eq(matches.stage, "group"), eq(matches.status, "finished")));
+  const finishedCount = new Map<string, number>();
+  for (const r of finishedGroup) {
+    if (r.groupLabel) {
+      finishedCount.set(r.groupLabel, (finishedCount.get(r.groupLabel) ?? 0) + 1);
+    }
+  }
+  const allComplete = GROUP_LABELS.every((g) => (finishedCount.get(g) ?? 0) >= 6);
+
+  const thirds = standings
+    .map((g) => {
+      const r = g.rows[2];
+      return r
+        ? {
+            group: g.label,
+            teamId: r.teamId,
+            name: r.name,
+            flag: r.flag,
+            points: r.points,
+            goalDiff: r.goalDiff,
+            goalsFor: r.goalsFor,
+          }
+        : null;
+    })
+    .filter((x): x is NonNullable<typeof x> => x != null);
+  const ranking = rankThirdPlaces(thirds);
+
+  const knockout = await getKnockoutMatches();
+  const slots: ThirdSlot[] = knockout
+    .filter(
+      (m) =>
+        m.stage === "round_of_32" &&
+        (m.homePlaceholder?.startsWith("3 ") || m.awayPlaceholder?.startsWith("3 ")),
+    )
+    .map((m) => {
+      const side = m.homePlaceholder?.startsWith("3 ") ? "home" : "away";
+      const placeholder = (side === "home" ? m.homePlaceholder : m.awayPlaceholder)!;
+      const assigned = side === "home" ? m.home : m.away;
+      return {
+        matchId: m.id,
+        placeholder,
+        allowedGroups: placeholder.slice(2).split("/").map((s) => s.trim()),
+        assignedTeamId: side === "home" ? m.homeTeamId : m.awayTeamId,
+        assignedName: assigned?.name ?? null,
+      };
+    });
+
+  return { allComplete, ranking, slots };
 }

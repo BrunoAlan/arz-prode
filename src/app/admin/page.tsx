@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/session";
-import { getMatchesOrdered } from "@/lib/queries";
+import { getMatchesOrdered, getThirdPlaceData } from "@/lib/queries";
+import { ThirdPlacePanel } from "@/components/ThirdPlacePanel";
 import { groupMatches, groupMatchesByDay, getActiveDayKey } from "@/lib/group-matches";
 import { DaySectionNav } from "@/components/DaySectionNav";
 import { ScrollToActiveSection } from "@/components/ScrollToActiveSection";
@@ -16,6 +17,7 @@ export default async function AdminPage({
   const { orden } = await searchParams;
   const byDate = orden !== "grupo";
   const allMatches = await getMatchesOrdered();
+  const thirdData = await getThirdPlaceData();
   const now = new Date();
   const sections = byDate
     ? groupMatchesByDay(allMatches)
@@ -63,6 +65,17 @@ export default async function AdminPage({
 
       <DaySectionNav sections={sections} activeKey={activeKey} />
       {byDate && activeKey && <ScrollToActiveSection targetId={activeKey} />}
+
+      <section className="mb-8">
+        <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Terceros clasificados
+        </h2>
+        <ThirdPlacePanel
+          allComplete={thirdData.allComplete}
+          ranking={thirdData.ranking}
+          slots={thirdData.slots}
+        />
+      </section>
 
       <div className="space-y-6">
         {sections.map((section) => (
