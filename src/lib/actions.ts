@@ -197,11 +197,25 @@ export async function assignThird(matchId: number, teamId: number) {
   // "3 A/B/C/D/F" -> ["A","B","C","D","F"]
   const allowedGroups = placeholder.slice(2).split("/").map((s) => s.trim());
 
-  // El equipo debe ser el 3° de uno de los grupos permitidos (y ese grupo, listado).
+  // El equipo debe ser el 3° de uno de los grupos permitidos Y completo (6 finished).
   const standings = await getGroupStandings();
+  const finishedGroup = await db
+    .select({ groupLabel: matches.groupLabel })
+    .from(matches)
+    .where(and(eq(matches.stage, "group"), eq(matches.status, "finished")));
+  const finishedCount = new Map<string, number>();
+  for (const r of finishedGroup) {
+    if (r.groupLabel) {
+      finishedCount.set(r.groupLabel, (finishedCount.get(r.groupLabel) ?? 0) + 1);
+    }
+  }
   const validThirds = new Set<number>();
   for (const g of standings) {
-    if (allowedGroups.includes(g.label) && g.rows[2]) {
+    if (
+      allowedGroups.includes(g.label) &&
+      g.rows[2] &&
+      (finishedCount.get(g.label) ?? 0) >= 6
+    ) {
       validThirds.add(g.rows[2].teamId);
     }
   }
