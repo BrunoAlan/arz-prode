@@ -93,7 +93,16 @@ export async function confirmResult(
     await db.update(predictions).set({ points }).where(eq(predictions.id, p.id));
   }
 
-  await applyBracketAdvance();
+  // El avance de llaves no debe bloquear la carga del resultado (camino crítico en
+  // vivo): si falla, el marcador y los puntos ya quedaron guardados arriba.
+  try {
+    await applyBracketAdvance();
+  } catch (e) {
+    console.error(
+      `applyBracketAdvance falló tras confirmar el resultado del partido ${matchId}`,
+      e,
+    );
+  }
 
   revalidatePath("/ranking");
   revalidatePath("/admin");
@@ -208,6 +217,15 @@ export async function assignThird(matchId: number, teamId: number) {
     .set(side === "home" ? { homeTeamId: teamId } : { awayTeamId: teamId })
     .where(eq(matches.id, matchId));
 
-  await applyBracketAdvance();
+  // La asignación del tercero ya quedó guardada arriba; si el avance posterior
+  // falla, no debe revertir ni bloquear la asignación.
+  try {
+    await applyBracketAdvance();
+  } catch (e) {
+    console.error(
+      `applyBracketAdvance falló tras asignar el tercero del partido ${matchId}`,
+      e,
+    );
+  }
   revalidatePath("/admin");
 }
