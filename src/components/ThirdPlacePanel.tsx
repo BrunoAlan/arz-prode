@@ -71,21 +71,27 @@ export function ThirdPlacePanel({
                 <span className="w-40 font-mono text-xs text-muted-foreground">
                   {slot.placeholder}
                 </span>
-                <select
-                  className="rounded border bg-background px-2 py-1 text-sm"
-                  disabled={pending}
-                  value={slot.assignedTeamId ?? ""}
-                  onChange={(e) =>
-                    e.target.value && assign(slot.matchId, Number(e.target.value))
-                  }
-                >
-                  <option value="">— elegir —</option>
-                  {options.map((o) => (
-                    <option key={o.teamId} value={o.teamId}>
-                      {o.name} (Grupo {o.group})
-                    </option>
-                  ))}
-                </select>
+                {options.length === 0 ? (
+                  <span className="text-xs text-muted-foreground">
+                    Sin terceros elegibles
+                  </span>
+                ) : (
+                  <select
+                    className="rounded border bg-background px-2 py-1 text-sm"
+                    disabled={pending}
+                    value={slot.assignedTeamId ?? ""}
+                    onChange={(e) =>
+                      e.target.value && assign(slot.matchId, Number(e.target.value))
+                    }
+                  >
+                    <option value="">— elegir —</option>
+                    {options.map((o) => (
+                      <option key={o.teamId} value={o.teamId}>
+                        {o.name} (Grupo {o.group})
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
             );
           })}
