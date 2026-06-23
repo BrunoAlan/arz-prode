@@ -65,10 +65,19 @@ export function resolveBracket(input: ResolveInput): ResolvedSlot[] {
     teamOf.set(m.id, { home: m.homeTeamId, away: m.awayTeamId });
   }
 
+  // Agrupar nodos por etapa una sola vez (en vez de filtrar por cada ronda).
+  const nodesByStage = new Map<string, typeof nodes>();
+  for (const n of nodes) {
+    const arr = nodesByStage.get(n.stage);
+    if (arr) arr.push(n);
+    else nodesByStage.set(n.stage, [n]);
+  }
+
   const out: ResolvedSlot[] = [];
   const emit = (matchId: number, side: "home" | "away", teamId: number) => {
+    const cur = teamOf.get(matchId);
+    if (!cur) return;
     out.push({ matchId, side, teamId });
-    const cur = teamOf.get(matchId)!;
     teamOf.set(
       matchId,
       side === "home" ? { ...cur, home: teamId } : { ...cur, away: teamId },
@@ -81,8 +90,8 @@ export function resolveBracket(input: ResolveInput): ResolvedSlot[] {
     if (!src || !src.finished) return null;
     if (src.homeScore == null || src.awayScore == null) return null;
     if (src.homeScore === src.awayScore) return null; // empate: no resoluble.
-    const t = teamOf.get(src.id)!;
-    if (t.home == null || t.away == null) return null;
+    const t = teamOf.get(src.id);
+    if (!t || t.home == null || t.away == null) return null;
     const homeWon = src.homeScore > src.awayScore;
     const winner = homeWon ? t.home : t.away;
     const loser = homeWon ? t.away : t.home;
@@ -90,7 +99,7 @@ export function resolveBracket(input: ResolveInput): ResolvedSlot[] {
   };
 
   for (const stage of ROUND_SEQUENCE) {
-    for (const node of nodes.filter((n) => n.stage === stage)) {
+    for (const node of nodesByStage.get(stage) ?? []) {
       const m = numberToDb.get(node.matchNumber);
       if (!m) continue;
       for (const side of ["home", "away"] as const) {
