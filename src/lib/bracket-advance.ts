@@ -124,3 +124,34 @@ export function resolveBracket(input: ResolveInput): ResolvedSlot[] {
 
   return out;
 }
+
+export type ThirdPlaceInput = {
+  group: string;
+  teamId: number;
+  name: string;
+  flag: string | null;
+  points: number;
+  goalDiff: number;
+  goalsFor: number;
+};
+
+export type RankedThird = ThirdPlaceInput & { rank: number; qualifies: boolean };
+
+export function rankThirdPlaces(thirds: ThirdPlaceInput[]): RankedThird[] {
+  const sorted = [...thirds].sort(
+    (a, b) =>
+      b.points - a.points ||
+      b.goalDiff - a.goalDiff ||
+      b.goalsFor - a.goalsFor ||
+      a.group.localeCompare(b.group),
+  );
+  return sorted.map((x, i) => ({ ...x, rank: i + 1, qualifies: i < 8 }));
+}
+
+export function isInvalidKnockoutDraw(
+  stage: string,
+  homeScore: number,
+  awayScore: number,
+): boolean {
+  return stage !== "group" && homeScore === awayScore;
+}

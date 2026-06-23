@@ -1,5 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { resolveBracket, type KnockoutMatchInput } from "./bracket-advance";
+import {
+  resolveBracket,
+  rankThirdPlaces,
+  isInvalidKnockoutDraw,
+  type KnockoutMatchInput,
+  type ThirdPlaceInput,
+} from "./bracket-advance";
 
 // Helper: arma un KnockoutMatchInput con defaults.
 function mk(
@@ -118,5 +124,43 @@ describe("resolveBracket", () => {
     const a = resolveBracket({ knockout: build(), groupOrder: new Map() });
     const b = resolveBracket({ knockout: build(), groupOrder: new Map() });
     expect(a).toEqual(b);
+  });
+});
+
+describe("rankThirdPlaces", () => {
+  const t = (group: string, points: number, goalDiff = 0, goalsFor = 0): ThirdPlaceInput => ({
+    group, teamId: group.charCodeAt(0), name: group, flag: null, points, goalDiff, goalsFor,
+  });
+
+  it("marca como clasificados solo a los 8 mejores", () => {
+    const thirds = ["A","B","C","D","E","F","G","H","I","J","K","L"]
+      .map((g, i) => t(g, 12 - i)); // A=12 pts ... L=1 pt
+    const ranked = rankThirdPlaces(thirds);
+    expect(ranked.filter((r) => r.qualifies).map((r) => r.group)).toEqual(
+      ["A", "B", "C", "D", "E", "F", "G", "H"],
+    );
+    expect(ranked.find((r) => r.group === "I")!.qualifies).toBe(false);
+  });
+
+  it("desempata por dif. de gol y luego goles a favor", () => {
+    const ranked = rankThirdPlaces([
+      t("A", 4, 1, 2),
+      t("B", 4, 3, 5), // mejor dif
+      t("C", 4, 3, 9), // misma dif que B, más GF
+    ]);
+    expect(ranked.map((r) => r.group)).toEqual(["C", "B", "A"]);
+  });
+});
+
+describe("isInvalidKnockoutDraw", () => {
+  it("permite empate en grupos", () => {
+    expect(isInvalidKnockoutDraw("group", 1, 1)).toBe(false);
+  });
+  it("rechaza empate en eliminatorias", () => {
+    expect(isInvalidKnockoutDraw("round_of_32", 2, 2)).toBe(true);
+    expect(isInvalidKnockoutDraw("final", 0, 0)).toBe(true);
+  });
+  it("permite no-empate en eliminatorias", () => {
+    expect(isInvalidKnockoutDraw("final", 3, 2)).toBe(false);
   });
 });
