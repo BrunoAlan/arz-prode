@@ -23,6 +23,7 @@ function mk(
     awayTeamId: null,
     homeScore: null,
     awayScore: null,
+    advancingTeamId: null,
     finished: false,
     ...over,
   };
@@ -112,6 +113,27 @@ describe("resolveBracket", () => {
     ];
     const slots = resolveBracket({ knockout, groupOrder: new Map() });
     expect(slots.some((s) => s.matchId === 90 && s.side === "home")).toBe(false);
+  });
+
+  it("empate definido propaga ganador al cruce siguiente y perdedor al 3er puesto", () => {
+    // Dos semis empatadas, definidas por penales vía advancingTeamId.
+    const knockout = [
+      mk(101, "Ganador CF-97", "Ganador CF-98", {
+        stage: "semi_final", homeTeamId: 11, awayTeamId: 12,
+        homeScore: 1, awayScore: 1, advancingTeamId: 12, finished: true,
+      }), // empate: avanza 12 (away)
+      mk(102, "Ganador CF-99", "Ganador CF-100", {
+        stage: "semi_final", homeTeamId: 21, awayTeamId: 22,
+        homeScore: 0, awayScore: 0, advancingTeamId: 21, finished: true,
+      }), // empate: avanza 21 (home)
+      mk(103, "Perdedor SF-101", "Perdedor SF-102", { stage: "third_place" }),
+      mk(104, "Ganador SF-101", "Ganador SF-102", { stage: "final" }),
+    ];
+    const slots = resolveBracket({ knockout, groupOrder: new Map() });
+    expect(slots).toContainEqual({ matchId: 104, side: "home", teamId: 12 }); // ganador SF-101
+    expect(slots).toContainEqual({ matchId: 104, side: "away", teamId: 21 }); // ganador SF-102
+    expect(slots).toContainEqual({ matchId: 103, side: "home", teamId: 11 }); // perdedor SF-101
+    expect(slots).toContainEqual({ matchId: 103, side: "away", teamId: 22 }); // perdedor SF-102
   });
 
   it("es idempotente (mismo input => mismo output)", () => {

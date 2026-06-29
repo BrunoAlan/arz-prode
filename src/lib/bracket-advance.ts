@@ -9,6 +9,7 @@ export type KnockoutMatchInput = {
   awayTeamId: number | null;
   homeScore: number | null;
   awayScore: number | null;
+  advancingTeamId?: number | null;
   finished: boolean;
 };
 
@@ -89,12 +90,23 @@ export function resolveBracket(input: ResolveInput): ResolvedSlot[] {
     const src = numberToDb.get(from);
     if (!src || !src.finished) return null;
     if (src.homeScore == null || src.awayScore == null) return null;
-    if (src.homeScore === src.awayScore) return null; // empate: no resoluble.
     const t = teamOf.get(src.id);
     if (!t || t.home == null || t.away == null) return null;
-    const homeWon = src.homeScore > src.awayScore;
-    const winner = homeWon ? t.home : t.away;
-    const loser = homeWon ? t.away : t.home;
+    let winner: number;
+    let loser: number;
+    if (src.homeScore === src.awayScore) {
+      // Empate: lo define el equipo que el admin marcó como avanzando (penales).
+      if (src.advancingTeamId == null) return null; // sin definición => no resoluble.
+      if (src.advancingTeamId !== t.home && src.advancingTeamId !== t.away) {
+        return null; // definición inconsistente con los equipos del partido.
+      }
+      winner = src.advancingTeamId;
+      loser = src.advancingTeamId === t.home ? t.away : t.home;
+    } else {
+      const homeWon = src.homeScore > src.awayScore;
+      winner = homeWon ? t.home : t.away;
+      loser = homeWon ? t.away : t.home;
+    }
     return want === "winner" ? winner : loser;
   };
 
