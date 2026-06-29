@@ -3,6 +3,7 @@ import {
   resolveBracket,
   rankThirdPlaces,
   isInvalidKnockoutDraw,
+  validateKnockoutResult,
   type KnockoutMatchInput,
   type ThirdPlaceInput,
 } from "./bracket-advance";
@@ -211,5 +212,42 @@ describe("isInvalidKnockoutDraw", () => {
   });
   it("permite no-empate en eliminatorias", () => {
     expect(isInvalidKnockoutDraw("final", 3, 2)).toBe(false);
+  });
+});
+
+describe("validateKnockoutResult", () => {
+  const teams = { homeTeamId: 10, awayTeamId: 20 };
+
+  it("grupo: empate OK y avance se normaliza a null", () => {
+    expect(
+      validateKnockoutResult({ stage: "group", homeScore: 1, awayScore: 1, advancingTeamId: null, ...teams }),
+    ).toEqual({ ok: true, advancingTeamId: null });
+  });
+
+  it("eliminatoria con ganador por marcador: avance se fuerza a null", () => {
+    expect(
+      validateKnockoutResult({ stage: "final", homeScore: 2, awayScore: 1, advancingTeamId: 10, ...teams }),
+    ).toEqual({ ok: true, advancingTeamId: null });
+  });
+
+  it("eliminatoria + empate sin avance: error", () => {
+    const r = validateKnockoutResult({ stage: "round_of_16", homeScore: 1, awayScore: 1, advancingTeamId: null, ...teams });
+    expect(r.ok).toBe(false);
+  });
+
+  it("eliminatoria + empate: el avance debe ser uno de los dos equipos", () => {
+    const r = validateKnockoutResult({ stage: "round_of_16", homeScore: 1, awayScore: 1, advancingTeamId: 99, ...teams });
+    expect(r.ok).toBe(false);
+  });
+
+  it("eliminatoria + empate con avance válido: ok y conserva el id", () => {
+    expect(
+      validateKnockoutResult({ stage: "final", homeScore: 0, awayScore: 0, advancingTeamId: 20, ...teams }),
+    ).toEqual({ ok: true, advancingTeamId: 20 });
+  });
+
+  it("eliminatoria + empate sin equipos asignados: error", () => {
+    const r = validateKnockoutResult({ stage: "quarter_final", homeScore: 1, awayScore: 1, advancingTeamId: 10, homeTeamId: null, awayTeamId: null });
+    expect(r.ok).toBe(false);
   });
 });

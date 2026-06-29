@@ -167,3 +167,38 @@ export function isInvalidKnockoutDraw(
 ): boolean {
   return stage !== "group" && homeScore === awayScore;
 }
+
+export type KnockoutResultValidation =
+  | { ok: true; advancingTeamId: number | null }
+  | { ok: false; error: string };
+
+/**
+ * Valida el resultado de una eliminatoria y normaliza el equipo que avanza.
+ * - Grupo o no-empate: avance => null.
+ * - Eliminatoria + empate: exige advancingTeamId y que sea uno de los dos equipos.
+ */
+export function validateKnockoutResult(args: {
+  stage: string;
+  homeScore: number;
+  awayScore: number;
+  advancingTeamId: number | null | undefined;
+  homeTeamId: number | null;
+  awayTeamId: number | null;
+}): KnockoutResultValidation {
+  const { stage, homeScore, awayScore, advancingTeamId, homeTeamId, awayTeamId } = args;
+  const isDraw = homeScore === awayScore;
+
+  if (stage === "group" || !isDraw) {
+    return { ok: true, advancingTeamId: null };
+  }
+  if (homeTeamId == null || awayTeamId == null) {
+    return { ok: false, error: "Asigná los equipos antes de cargar un empate en eliminatorias." };
+  }
+  if (advancingTeamId == null) {
+    return { ok: false, error: "Definí qué equipo avanza por penales." };
+  }
+  if (advancingTeamId !== homeTeamId && advancingTeamId !== awayTeamId) {
+    return { ok: false, error: "El equipo que avanza debe ser uno de los dos del partido." };
+  }
+  return { ok: true, advancingTeamId };
+}
