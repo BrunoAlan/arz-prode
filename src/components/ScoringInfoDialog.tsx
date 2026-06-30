@@ -99,6 +99,7 @@ export function ScoringInfoDialog() {
           <div className="mt-5 flex items-center justify-between gap-3">
             <label className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground select-none">
               <Checkbox.Root
+                aria-label="No volver a mostrar"
                 checked={dontShowAgain}
                 onCheckedChange={setDontShowAgain}
                 className="flex size-4 items-center justify-center rounded border border-input bg-background text-primary-foreground data-[checked]:border-primary data-[checked]:bg-primary"
