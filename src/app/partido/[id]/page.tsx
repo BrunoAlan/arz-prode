@@ -36,6 +36,16 @@ export default async function PartidoPage({
           </span>
         )}
       </div>
+      {match.status === "finished" &&
+        match.homeScore === match.awayScore &&
+        match.advancingTeamId != null && (
+          <p className="mt-1 text-sm text-muted-foreground">
+            {(match.advancingTeamId === match.homeTeamId
+              ? match.home
+              : match.away)?.name}{" "}
+            avanza por penales
+          </p>
+        )}
 
       <h2 className="mt-8 mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         Pronósticos
