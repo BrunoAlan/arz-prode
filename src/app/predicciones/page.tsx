@@ -8,6 +8,7 @@ import { ScrollToActiveSection } from "@/components/ScrollToActiveSection";
 import { PredictionForm } from "@/components/PredictionForm";
 import { TeamLabel } from "@/components/TeamLabel";
 import { LocalTime } from "@/components/LocalTime";
+import { ScoringInfoDialog } from "@/components/ScoringInfoDialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -31,6 +32,7 @@ export default async function PrediccionesPage({
 
   return (
     <div>
+      <ScoringInfoDialog />
       <header className="mb-6">
         <h1 className="font-display text-3xl font-semibold tracking-tight">
           Predicciones
