@@ -8,7 +8,7 @@ import { requireUser, requireAdmin } from "@/lib/session";
 import { isMatchPredictable } from "@/lib/match-rules";
 import { scorePrediction } from "@/lib/scoring";
 import { getKnockoutMatches, getGroupStandings, getCompleteGroups } from "@/lib/queries";
-import { resolveBracket, isInvalidKnockoutDraw } from "@/lib/bracket-advance";
+import { resolveBracket, validateKnockoutResult } from "@/lib/bracket-advance";
 
 export async function savePrediction(
   matchId: number,
@@ -51,6 +51,7 @@ export async function confirmResult(
   matchId: number,
   homeScore: number,
   awayScore: number,
+  advancingTeamId?: number | null,
 ) {
   await requireAdmin();
   if (
@@ -68,15 +69,25 @@ export async function confirmResult(
     where: eq(matches.id, matchId),
   });
   if (!match) throw new Error("Partido inexistente");
-  if (isInvalidKnockoutDraw(match.stage, homeScore, awayScore)) {
-    throw new Error(
-      "En eliminatorias cargá el resultado con la definición ya reflejada (ej. 3-2); no puede quedar empate.",
-    );
-  }
+
+  const validation = validateKnockoutResult({
+    stage: match.stage,
+    homeScore,
+    awayScore,
+    advancingTeamId,
+    homeTeamId: match.homeTeamId,
+    awayTeamId: match.awayTeamId,
+  });
+  if (!validation.ok) throw new Error(validation.error);
 
   await db
     .update(matches)
-    .set({ homeScore, awayScore, status: "finished" })
+    .set({
+      homeScore,
+      awayScore,
+      status: "finished",
+      advancingTeamId: validation.advancingTeamId,
+    })
     .where(eq(matches.id, matchId));
 
   // Recalcular puntos de cada pronóstico del partido.
@@ -150,6 +161,7 @@ async function applyBracketAdvance() {
       awayTeamId: m.awayTeamId,
       homeScore: m.homeScore,
       awayScore: m.awayScore,
+      advancingTeamId: m.advancingTeamId,
       finished: m.status === "finished",
     })),
     groupOrder,

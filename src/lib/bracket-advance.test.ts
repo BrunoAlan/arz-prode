@@ -2,7 +2,6 @@ import { describe, it, expect } from "vitest";
 import {
   resolveBracket,
   rankThirdPlaces,
-  isInvalidKnockoutDraw,
   validateKnockoutResult,
   type KnockoutMatchInput,
   type ThirdPlaceInput,
@@ -199,19 +198,6 @@ describe("rankThirdPlaces", () => {
       t("C", 4, 3, 9), // misma dif que B, más GF
     ]);
     expect(ranked.map((r) => r.group)).toEqual(["C", "B", "A"]);
-  });
-});
-
-describe("isInvalidKnockoutDraw", () => {
-  it("permite empate en grupos", () => {
-    expect(isInvalidKnockoutDraw("group", 1, 1)).toBe(false);
-  });
-  it("rechaza empate en eliminatorias", () => {
-    expect(isInvalidKnockoutDraw("round_of_32", 2, 2)).toBe(true);
-    expect(isInvalidKnockoutDraw("final", 0, 0)).toBe(true);
-  });
-  it("permite no-empate en eliminatorias", () => {
-    expect(isInvalidKnockoutDraw("final", 3, 2)).toBe(false);
   });
 });
 

@@ -93,6 +93,7 @@ export const matches = pgTable("match", {
   status: matchStatus("status").notNull().default("scheduled"),
   homeScore: integer("home_score"),
   awayScore: integer("away_score"),
+  advancingTeamId: integer("advancing_team_id").references(() => teams.id),
 });
 
 export const predictions = pgTable(

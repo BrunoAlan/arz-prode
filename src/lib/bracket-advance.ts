@@ -160,14 +160,6 @@ export function rankThirdPlaces(thirds: ThirdPlaceInput[]): RankedThird[] {
   return sorted.map((x, i) => ({ ...x, rank: i + 1, qualifies: i < 8 }));
 }
 
-export function isInvalidKnockoutDraw(
-  stage: string,
-  homeScore: number,
-  awayScore: number,
-): boolean {
-  return stage !== "group" && homeScore === awayScore;
-}
-
 export type KnockoutResultValidation =
   | { ok: true; advancingTeamId: number | null }
   | { ok: false; error: string };
