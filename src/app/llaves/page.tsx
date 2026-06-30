@@ -28,6 +28,14 @@ export default async function LlavesPage() {
   function toCard(node: BracketNode): BracketCardData {
     const m = matchByKey.get(key(node.homePlaceholder, node.awayPlaceholder)) ?? null;
     const pred = m ? preds.get(m.id) ?? null : null;
+    const advancingSide: "home" | "away" | null =
+      m && m.advancingTeamId != null
+        ? m.advancingTeamId === m.homeTeamId
+          ? "home"
+          : m.advancingTeamId === m.awayTeamId
+            ? "away"
+            : null
+        : null;
     return {
       matchId: m?.id ?? null,
       kickoffIso: m ? m.kickoffAt.toISOString() : null,
@@ -38,6 +46,7 @@ export default async function LlavesPage() {
       homeScore: m?.homeScore ?? null,
       awayScore: m?.awayScore ?? null,
       finished: m?.status === "finished",
+      advancingSide,
       pred: pred
         ? {
             homeScorePred: pred.homeScorePred,

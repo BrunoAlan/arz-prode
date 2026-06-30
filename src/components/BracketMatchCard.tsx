@@ -14,6 +14,7 @@ export type BracketCardData = {
   homeScore: number | null;
   awayScore: number | null;
   finished: boolean;
+  advancingSide: "home" | "away" | null;
   pred: {
     homeScorePred: number;
     awayScorePred: number;
@@ -38,17 +39,30 @@ function Row({
   placeholder,
   score,
   finished,
+  advancing,
 }: {
   team: TeamLite | null;
   placeholder: string;
   score: number | null;
   finished: boolean;
+  advancing?: boolean;
 }) {
   return (
     <div className="flex items-center justify-between gap-2 text-sm">
-      <TeamLabel team={team} placeholder={placeholder} className="min-w-0 truncate" />
-      <span className="font-mono tabular-nums text-muted-foreground">
-        {finished && score != null ? score : "–"}
+      <TeamLabel
+        team={team}
+        placeholder={placeholder}
+        className={`min-w-0 truncate ${advancing ? "font-semibold" : ""}`}
+      />
+      <span className="flex items-center gap-1">
+        {advancing && (
+          <span className="rounded bg-muted px-1 text-[9px] font-medium uppercase tracking-wide text-muted-foreground">
+            pen.
+          </span>
+        )}
+        <span className="font-mono tabular-nums text-muted-foreground">
+          {finished && score != null ? score : "–"}
+        </span>
       </span>
     </div>
   );
@@ -67,12 +81,14 @@ export function BracketMatchCard({ data }: { data: BracketCardData }) {
         placeholder={data.homePlaceholder}
         score={data.homeScore}
         finished={data.finished}
+        advancing={data.finished && data.advancingSide === "home"}
       />
       <Row
         team={data.away}
         placeholder={data.awayPlaceholder}
         score={data.awayScore}
         finished={data.finished}
+        advancing={data.finished && data.advancingSide === "away"}
       />
       {data.finished && data.pred && (
         <div
