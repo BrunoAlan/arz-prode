@@ -90,12 +90,16 @@ export default async function AdminPage({
                     key={m.id}
                     matchId={m.id}
                     kickoffIso={m.kickoffAt.toISOString()}
+                    stage={m.stage}
                     home={m.home}
                     away={m.away}
+                    homeTeamId={m.homeTeamId}
+                    awayTeamId={m.awayTeamId}
                     homePlaceholder={m.homePlaceholder}
                     awayPlaceholder={m.awayPlaceholder}
                     initialHome={m.homeScore}
                     initialAway={m.awayScore}
+                    initialAdvancingTeamId={m.advancingTeamId}
                     finished={m.status === "finished"}
                   />
                 ))}
